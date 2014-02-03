@@ -1,0 +1,32 @@
+#         SOPCAST         #
+#                         #
+#
+# this is notes for video: http://www.youtube.com/watch?v=gIIalmYCqzs
+# install package sp-auth for cli
+# Format=spp-category-channeltitle.language,subtitle
+sppc () { #choose a player, comment out the ones not using
+        #player='mplayer'
+#        player="mplayer -cache 1000"
+        #player='vlc'
+        #player='vlc --control=lirc'
+        (sp-sc "$1" 8901 9901 &>/dev/null &); sleep 10; wait $(mplayer http://localhost:9901); killall sp-sc;
+}
+
+#         google search from cli         #
+#                                        #
+function gg {
+	value="$(perl -MURI::Escape -e 'print uri_escape($ARGV[0]);' "$*")"
+	open "http://www.google.ch/search?q=$value"
+}
+
+#         CONVERT YOU TO MP3         #
+#         usage: yt2mp3 url          #
+ytmp3() { youtube-dl -c --restrict-filenames --extract-audio --audio-format mp3 -o "%(title)s.%(ext)s" $@ ;}
+
+#         ls after a cd        #
+#                              #
+function cd()
+{
+ builtin cd "$*" && ls
+}
+
