@@ -4,9 +4,9 @@ fi
 
 # For External or Custom Alias and Function
 # Alias definitions.
-if [ -f ~/.bash_aliases.txt ]; then
-    . ~/.bash_aliases.txt
-fi
+  if [ -f ~/.bash_aliases.txt ]; then
+      . ~/.bash_aliases.txt
+  fi
 
 # Function definitions.
 if [ -f ~/.bash_functions.txt ]; then
@@ -14,9 +14,21 @@ if [ -f ~/.bash_functions.txt ]; then
 fi
 
 # Prompt definitions.
-#if [ -f ~/.bash_prompt.txt ]; then
-#    . ~/.bash_prompt.txt
-#fi
+if [ -f ~/.bash_prompt.txt ]; then
+    . ~/.bash_prompt.txt
+fi
+
+if [ -d ~/bin ]; then
+     export PATH="~/bin:$PATH"
+  else
+     echo "No Directory exist, Can not set the PATH for ~/bin. Non Fatal error"
+fi
+
+##################################################
+# Stop Flash from tracking everything you do.  #
+##################################################
+###### Brute force way to block all LSO cookies on Linux system with non-free Flash browser plugin
+#for A in ~/.adobe ~/.macromedia ; do ( [ -d $A ] && rm -rf $A ; ln -s -f /dev/null $A ) ; done
 
 xhost +local:root > /dev/null 2>&1
 
@@ -47,17 +59,15 @@ export LESS_TERMCAP_ue=$'\E[0m'        # end underline
 export LESS_TERMCAP_us=$'\E[01;32m'    # begin underline          export MANPAGER="/usr/bin/most -s" # color using most
 
 #
-alias rba='xrdb ~/.bash_aliases.txt'
-alias rbr='xrdb ~/.bashrc'
-alias rbf='xrdb ~/.bash_functions.txt'
-alias rxds='xrdb ~/.Xdefaults'
-alias rxrs='xrdb ~/.Xresources'
+#alias eb='vim ~/.bashrc; source ~/.bashrc && echo "Your .bashrc have been sourced"'
+#alias ea='vim ~/.bash_aliases.txt; source ~/.bash_aliases.txt && echo "Your .bash_aliases.txt have been sourced"'
+#alias ef='vim ~/.bash_functions.txt; source ~/.bash_functions.txt && echo "Your .bash_functions.txt have been sourced"'
 
-alias rm='rm -i -v' # 'rm -i' prompts for every file
-alias cp='cp -i -v'
-alias mv='mv -i -v'
+#alias rm='rm -i -v' # 'rm -i' prompts for every file
+#alias cp='cp -i -v'
+#alias mv='mv -i -v'
 
-alias ytd='youtube-dl -cit'
+#alias ytd='youtube-dl -cit '
 #alias ym3='ytmp3 '
 
 #
@@ -93,7 +103,7 @@ ex ()
   fi
 } 
 
-ytmp3() { youtube-dl -c --restrict-filenames --extract-audio --audio-format mp3 -o "%(title)s.%(ext)s" $@ ;}
+#ytmp3() { youtube-dl -c --restrict-filenames --extract-audio --audio-format mp3 -o "%(title)s.%(ext)s" $@ ;}
 
 # PROMPT
 PS1='[\u@\h \W]\$ ' 

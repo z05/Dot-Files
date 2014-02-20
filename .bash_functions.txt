@@ -1,32 +1,3317 @@
-#         SOPCAST         #
-#                         #
+##################################################
+# 1 SOPCAST                                      #
+##################################################
+#                                                #
+# http://forum.wiziwig.eu/forums/14-Sopcast
+# http://sopcast.ucoz.com/
+# google keyword: sop://broker.sopcast
+
+# install sopcast commandline version
+# Archlinux: sopcast ( x64 https://www.archlinux.org/packages/multilib/x86_64/sopcast/)
+# Archlinux: sopcast ( x32 https://www.archlinux.org/packages/community/i686/sopcast/)
+# Ubuntu/Debian: sp-auth (https://launchpad.net/~jason-scheunemann/+archive/ppa)
+
+# choose a players (cvlc is default)
+SP_VIDPLAYER=cvlc
+# SP_VIDPLAYER=vlc
+# SP_VIDPLAYER=(vlc --control=lirc)
+# SP_VIDPLAYER=mplayer
+# SP_VIDPLAYER=(mplayer -cache 1000)
+
+# wait X seconds to stabilize channel (make it longer if u got slower connection)
+SP_SLEEP=15
+
+# sopcast port and player port
+SP_LOCAL_PORT=55050
+SP_PLAYER_PORT=55051
+
+# manually kill sopcast (sometimes it doesnt exit properly and still uses bandwidth in the background)
+sppc-kill() { killall sp-sc ;}
+
+# kills existing connection, starts a new connection, sleep X sec to stabilize the stream, waits to player to exit and kill itself
+sppc() {
+killall sp-sc &>/dev/null
+(sp-sc "$1" $SP_LOCAL_PORT $SP_PLAYER_PORT &>/dev/null &)
+sleep $SP_SLEEP
+($SP_VIDPLAYER http://localhost:$SP_PLAYER_PORT)
+wait
+killall sp-sc
+}
+
+#### eng = english, ro = romanian, esp = espanol/spanish
+# added on February 06, 2014
+spp-doc-explorer.eng,ro() { sppc "sop://broker.sopcast.com:3912/149269" ;}
+spp-doc-history.eng,ro() { sppc "sop://broker.sopcast.com:3912/148253" ;}
+spp-doc-history2.eng,ro() { sppc "sop://broker.sopcast.com:3912/149268" ;}
+spp-doc-natgeo.eng,ro() { sppc "sop://broker.sopcast.com:3912/148248" ;}
+spp-doc-natgeowild.eng,ro() { sppc "sop://broker.sopcast.com:3912/148259" ;}
+spp-doc-nature.eng,ro() { sppc "sop://broker.sopcast.com:3912/149267" ;}
+spp-movie-hbo.eng,ro() { sppc "sop://broker.sopcast.com:3912/148883" ;}
+spp-movie-hbo2.eng,ro() { sppc "sop://broker.sopcast.com:3912/120702" ;}
+spp-tv-universal.eng,ro() { sppc "sop://broker.sopcast.com:3912/148255" ;}
+spp-tv-axn.eng,ro() { sppc "sop://broker.sopcast.com:3912/148257" ;}
+spp-tv-axncrime.eng,ro() { sppc "sop://broker.sopcast.com:3912/149261" ;}
+
+##################################################
+# .. SYSTEM FUNCTIONS                            #
+##################################################
+#                                                #
+
+
+##################################################
+# .. DIRECTORY NAVIGATION                        #
+##################################################
+# http://dotfiles.org/~wesdeboer/.bashrc
+function goto () {
+	dir=`find ~ -type d -name $1*`
+	if [ -d "$dir" ]; then
+		cd $dir
+	else
+		echo "Couldn't find $1"
+	fi
+}
+
+##################################################
+# Cp with progress bar (using pv)		         #
+##################################################
+#                                                #
+function cp_p() {
+	if [ `echo "$2" | grep ".*\/$"` ]
+	then
+		pv "$1" > "$2""$1"
+	else
+		pv "$1" > "$2"/"$1"
+	fi
+}
+
+##################################################
+# .. Mount/unmount CIFS shares; pseudo-		     #
+#    replacement for smbmount		         	 #
+##################################################
+##   $1 = remote share name in form of //server/share
+##   $2 = local mount point
+function cifsmount() { sudo mount -t cifs -o username=${USER},uid=${UID},gid=${GROUPS} $1 $2; }
+function cifsumount() { sudo umount $1; }
+
+##################################################
+# Substitutes underscores for blanks in all the  #
+# filenames in a directory			 #
+##################################################
+#                                                #
+function blank_rename()
+{
+ONE=1                     # For getting singular/plural right (see below).
+number=0                  # Keeps track of how many files actually renamed.
+FOUND=0                   # Successful return value.
+for filename in *         #Traverse all files in directory.
+do
+     echo "$filename" | grep -q " "         #  Check whether filename
+     if [ $? -eq $FOUND ]                   #+ contains space(s).
+     then
+       fname=$filename                      # Yes, this filename needs work.
+       n=`echo $fname | sed -e "s/ /_/g"`   # Substitute underscore for blank.
+       mv "$fname" "$n"                     # Do the actual renaming.
+       let "number += 1"
+     fi
+done
+if [ "$number" -eq "$ONE" ]                 # For correct grammar.
+then
+ echo "$number file renamed."
+else
+ echo "$number files renamed."
+fi
+}
+
+##################################################
+# Backup a file with a date-time stamp		 #
+##################################################
+# Usage "bu filename.txt"
+function bu() { cp $1 ${1}-`date +%Y%m%d%H%M`.backup ; }
+#                                                #
+
+##################################################
+# Creates a backup of the file passed as	     #
+# parameter with the date and time		         #
+##################################################
+#                                                #
+function bak()
+{
+  cp $1 $1_`date +%H:%M:%S_%d-%m-%Y`
+}
+
+##################################################
+# Backup .bash* files				             #
+##################################################
+#                                                #
+function backup_bashfiles()
+{
+  ARCHIVE="$HOME/bash_dotfiles_$(date +%Y%m%d_%H%M%S).tar.gz";
+  cd ~
+  tar -czvf $ARCHIVE .bash_profile .bashrc .bash_functions .bash_aliases .bash_prompt
+  echo "All backed up in $ARCHIVE";
+}
+
+##################################################
+# Creates an archive from directory		 #
+##################################################
+
+function mktar() { tar cvf  "${1%%/}.tar"     "${1%%/}/"; }
+
+function mktbz() { tar cvjf "${1%%/}.tar.bz2" "${1%%/}/"; }
+
+function mktgz() { tar cvzf "${1%%/}.tar.gz"  "${1%%/}/"; }
+
+function mkzip() { zip -r "${1%%/}.zip"       "${1%%/}/"; }
+
+function mkzip_() { zip -r "${1%%/}.zip" "$1" ; } # Create a ZIP archive of a file or folder.
+
+##################################################
+# Pull a single file out of a .tar.gz		 #
+##################################################
+##
+function pullout() {
+  if [ $# -ne 2 ]; then
+    echo "need proper arguments:"
+    echo "pullout [file] [archive.tar.gz]"
+    return 1
+  fi
+  case $2 in
+    *.tar.gz|*.tgz)
+    gunzip < $2 | tar -xf - $1
+    ;;
+    *)
+    echo $2 is not a valid archive
+    return 1
+    ;;
+  esac
+  return 0
+}
+
+#################################################
+# .. Checksum                                   #
+#################################################
+#                                               #
+function checksum()
+# copyright 2007 - 2010 Christopher Bratusek
+{
+	action=$1
+	shift
+	if [[ ( $action == "-c" || $action == "--check" ) && $1 == *.* ]]; then
+		type="${1/*./}"
+	else	type=$1
+		shift
+	fi
+	case $type in
+		md5 )
+			checktool=md5sum
+		;;
+		sha1 | sha )
+			checktool=sha1sum
+		;;
+		sha224 )
+			checktool=sha224sum
+		;;
+		sha256 )
+			checktool=sha256sum
+		;;
+		sha384 )
+			checktool=sha384sum
+		;;
+		sha512 )
+			checktool=sha512sum
+		;;
+	esac
+	case $action in
+		-g | --generate )
+			for file in "${@}"; do
+				$checktool "${file}" > "${file}".$type
+			done
+		;;
+		-c | --check )
+			for file in "${@}"; do
+				if [[ "${file}" == *.$type ]]; then
+					$checktool --check "${file}"
+				else	$checktool --check "${file}".$type
+				fi
+			done
+		;;
+		-h | --help )
+		;;
+	esac
+}
+
+##################################################
+# .. MD5 checksum
+##################################################
+#                                                #
+function md5()
+{
+    echo -n $@ | md5sum
+}
+
+##################################################
+# Encryption / decryption # copyright 2007 - 2010 Christopher Bratusek #
+##################################################
+## do twice to decrypt
+#                                                #
+function crypt() {
+	if [[ -e "$1" ]]; then
+		tr a-zA-Z n-za-mN-ZA-M < "$1" > "$1".crypt
+		rm -f "$1"
+		mv "$1".crypt "$1"
+	fi
+}
+
+####################################################
+# .. basic encrypt / decrypt                       #
+# .. example: "encry filename" or "decry filename" #
+####################################################
+#                                                  #
+function encry()
+{
+gpg -ac --no-options "$1"
+}
+
+function decry()
+{
+gpg --no-options "$1"
+}
+
+##################################################
+
+##################################################
+# Random data overwriting			 #
+##################################################
+##                                               #
+#function overwriter()
+#{
+## The author of this script, Elias Amaral,
+## claims no copyright over it.
+## http://iamstealingideas.wordpress.com/2010/05/20/writing-random-data-to-a-hard-drive-again
+#msg() {
+#  printf "\n - $1\n\n" $2
+#}
+#mbs=4 # 4mb
+#blocksize=$(($mbs * 1024 * 1024))
+#dev=$1
+#if [[ -z $dev ]]; then
+#  msg "usage: $0 <device>"; exit
+#elif [[ ! -b $dev ]]; then
+#  msg "$dev: not a block device"; exit
+#elif [[ ! -w $dev ]]; then
+#  msg "$dev: no write permission"; exit
+#elif grep -q $dev /etc/mtab; then
+#  msg "$dev: mounted filesystem on device, omgomg!"; exit
+#fi
+#cat <<end
+#This program writes random data to a hard disk.
+#It is intended to be used before storing encrypted data.
+#It may contain bugs (but seems to work for me).
+#It seems you have chosen to wipe data from the disk $dev.
+#Here is the partition table of this disk:
+#end
+#fdisk -l $dev
+#echo
+#echo 'Are you sure you want to proceed?'
+#msg 'WARNING: IT WILL DESTROY ALL DATA ON THE DISK'
+#read -p 'Type uppercase yes if you want to proceed: ' q
+#if [[ $q != YES  ]]; then
+#  exit
+#fi
+#while
+#  echo $i > step.new
+#  mv step.new step
+#  msg 'Writing at offset %s' $(($mbs * $i))M
+#  openssl rand \
+#          -rand /dev/urandom \
+#          $blocksize | \
+#  dd of=$dev \
+#     bs=$blocksize \
+#     seek=$i
+#do
+#  let i++
+#done
+#msg Finished.
+#}
 #
-# this is notes for video: http://www.youtube.com/watch?v=gIIalmYCqzs
-# install package sp-auth for cli
-# Format=spp-category-channeltitle.language,subtitle
-sppc () { #choose a player, comment out the ones not using
-        #player='mplayer'
-#        player="mplayer -cache 1000"
-        #player='vlc'
-        #player='vlc --control=lirc'
-        (sp-sc "$1" 8901 9901 &>/dev/null &); sleep 10; wait $(mplayer http://localhost:9901); killall sp-sc;
-}
+#
+#
+#alias overwriter_='sudo dd if=/dev/zero bs=1M | openssl bf-cbc -pass pass:`cat /dev/urandom | tr -dc [:graph:] | head -c56` | sudo dd of=$dev bs=1M'
 
-#         google search from cli         #
-#                                        #
-function gg {
+##################################################
+# DOWLOADING FUN                                 #
+##################################################
+#                                                #
+
+##################################################
+# .. W3M w/ INLINE IMAGES                        #
+##################################################
+#                                                #
+# W3M Browser with inline images    # https://plus.google.com/102499719144563443986/posts/Vja8W69iHoi
+#w3mimg() { w3m -o imgdisplay=/usr/lib/w3m/w3mimgdisplay $1 ;}
+
+##################################################
+# 2 GOOLGE SEARCH FROM CLI W/ FIREFOX            #
+##################################################                                           #
+#                                                #
+function gf {
 	value="$(perl -MURI::Escape -e 'print uri_escape($ARGV[0]);' "$*")"
-	open "http://www.google.ch/search?q=$value"
+	xdg-open "http://www.google.ch/search?q=$value"
 }
 
-#         CONVERT YOU TO MP3         #
-#         usage: yt2mp3 url          #
+##################################################
+# 3 GOOGLE SEARCH FROM CLI W/ w3M                #
+##################################################
+#                                                #
+function gw {
+	value="$(perl -MURI::Escape -e 'print uri_escape($ARGV[0]);' "$*")"
+	w3m "http://www.google.ch/search?q=$value"
+}
+
+##################################################
+# Search IMDB.COM				 #
+##################################################
+
+function imdb()
+{
+firefox "http://www.imdb.com/find?s=all&q="${@}"&x=0&y=0" &
+}
+##################################################
+# ThePirateBay.org torrent search		         #
+##################################################
+#                                                #
+#function piratebay()
+#{
+#lynx -dump http://thepiratebay.org/search/$@|awk '/TPB.torrent$/ {print $2}'
+#}
+
+###########################################################
+# .. TRANSMISSION FUNCTIONS (alias these)                 #
+###########################################################
+#                                                         #
+tsm() { transmission-remote --list ;} # numbers of ip being blocked by the blocklist # credit: smw from irc #transmission
+tsm-count() { echo "Blocklist rules:" $(curl -s --data \
+'{"method": "session-get"}' localhost:9091/transmission/rpc -H \
+"$(curl -s -D - localhost:9091/transmission/rpc | grep X-Transmission-Session-Id)" \
+| cut -d: -f 11 | cut -d, -f1) ;}
+tsm-blocklist() { $PATH_SCRIPTS/ipblist.sh ;} # update blocklist
+tsm-daemon() { systemctrl start transmission ;}
+tsm-quit() { systemctrl stop transmission ;}
+tsm-altspeedenable() { transmission-remote --alt-speed ;} # limit bandwidth
+tsm-altspeeddisable() { transmission-remote --no-alt-speed ;} # dont limit bandwidth
+tsm-add() { transmission-remote --add "$1" ;}
+tsm-askmorepeers() { transmission-remote -t"$1" --reannounce ;}
+tsm-pause() { transmission-remote -t"$1" --stop ;} # <id> or all
+tsm-start() { transmission-remote -t"$1" --start ;} # <id> or all
+tsm-purge() { transmission-remote -t"$1" --remove-and-delete ;} # delete data also
+tsm-remove() { transmission-remote -t"$1" --remove ;} # leaves data alone
+tsm-info() { transmission-remote -t"$1" --info ;}
+tsm-speed() { while true;do clear; transmission-remote -t"$1" -i | grep Speed;sleep 1;done ;}
+
+###########################################################
+###### stream YouTube videos directly to your media player
+###########################################################
+#                                                         #
+function mtube() {
+  video_id=$(curl -s $1 | sed -n "/watch_fullscreen/s;.*\(video_id.\+\)&title.*;\1;p");
+  mplayer -fs $(echo "http://youtube.com/get_video.php?$video_id");
+}
+
+##################################################################
+###### download YouTube music playlist and convert it to mp3 files
+##################################################################
+#                                                                #
+function yt-pl2mp3() { umph -m 50 $1 | cclive -f mp4_720p; IFS=$(echo -en "\n\b"); for track in $(ls | grep mp4 | awk '{print $0}' | sed -e 's/\.mp4//'); do (ffmpeg -i $track.mp4 -vn -ar 44100 -ac 2 -ab 320 -f mp3 $track.mp3); done; rm -f *.mp4 ; }
+
+##################################################
+# 4 CONVERT YOU TO MP3  USAGE: yt2mp3 <url>      #
+##################################################
+#                                                #
 ytmp3() { youtube-dl -c --restrict-filenames --extract-audio --audio-format mp3 -o "%(title)s.%(ext)s" $@ ;}
 
-#         ls after a cd        #
+##################################################
+# .. youtube-viewer functions and subs           #
+##################################################
+#                                                #
+yt-listen() { youtube-viewer -n $@ ;} # no video, music/audio only
+yt-music() { youtube-viewer -n --category=Music --top ;} # show top music list
+yts-amcmovietalk() { youtube-viewer -p PLBFB97E5B9494EEBD ;}
+yts-amcmovietalk-mailbag() { youtube-viewer -p PLYNW0PN4_jrqlBqzAVRv3rfpo6nhzJnKp ;}
+yts-alwayson() { youtube-viewer "Always On" --author=CNETTV --orderby=published --duration=long ;}
+yts-btt-beyondthetrailer() { youtube-viewer -u beyondthetrailer ;}
+yts-btt-thinkabouttheink() { youtube-viewer -u thinkabouttheink ;}
+yts-catherinereitman() { youtube-viewer -u catherinereitman ;}
+yts-greentvgreentv() { youtube-viewer -u greentvgreentv ;}
+yts-homeorganizing() { youtube-viewer -u homeorganizing ;}
+yts-happyconsolegamer() { youtube-viewer -u happyconsolegamer ;}
+yts-kirstendirksen() { youtube-viewer -u kirstendirksen ;}
+yts-knucklegame() { youtube-viewer -u knucklegame ;}
+yts-lifehacker() { youtube-viewer -u lifehacker ;}
+yts-jamesnintendonerd() { youtube-viewer -u jamesnintendonerd ;}
+yts-midwaysimplicity() { youtube-viewer -u midwaysimplicity ;}
+yts-midwaysimplicity-mtohami() { youtube-viewer -u mtohami ;}
+yts-mma-arielhelwani() { youtube-viewer -u arielhelwani ;}
+yts-mma-fueltv() { youtube-viewer -u fueltv ;}
+yts-mma-gracieacademy() { youtube-viewer -u gracieacademy ;}
+yts-mma-graciebreakdown() { youtube-viewer -u graciebreakdown ;}
+yts-mma-karynbryant() { youtube-viewer -u karynbryant ;}
+yts-mma-mmafightingonsbn() { youtube-viewer -u mmafightingonsbn ;}
+yts-mma-thefightnetwork() { youtube-viewer -u thefightnetwork ;}
+yts-mma-themmanuts() { youtube-viewer -u themmanuts ;}
+yts-mma-ufc() { youtube-viewer -u ufc ;}
+yts-mma-uncutsports() { youtube-viewer -u uncutsports ;}
+yts-rallisp() { youtube-viewer -u rallisp ;}
+yts-tmw-askhodgetwins() { youtube-viewer -u askhodgetwins ;}
+yts-tmw-fastingtwins() { youtube-viewer -u fastingtwins ;}
+yts-tmw-getfit4women() { youtube-viewer -u getfit4women ;}
+yts-tmw-hodgetwins() { youtube-viewer -u hodgetwins ;}
+yts-tmw-hodgetwinsonsports() { youtube-viewer -u hodgetwinsonsports ;}
+yts-tmw-twinmuscleworkout() { youtube-viewer -u twinmuscleworkout ;}
+yts-walkingdead() { youtube-viewer -p PLC7EC9FB2E211A261 ;}
+yts-walkingdead-talkingdead() { youtube-viewer -p PLP63B9XPsQt3H_5xGXifFxFJE7-RsKFb6 ;}
+yts-walkingdead-webisodes() { youtube-viewer -p PLC09448134D906619 ;}
+yts-wwefannation() { youtube-viewer -u wwefannation ;}
+
+##################################################
+# 5 ls -a AFTER cd                               #
+##################################################
 #                              #
 function cd()
 {
- builtin cd "$*" && ls
+ builtin cd "$*" && ls -a
 }
 
+##################################################
+# 6 DOWNLOAD ALL IMAGES FROM A 4CHAN THREAD	     #
+##################################################
+#                                               #
+function 4chanimages()
+{
+curl -s http://boards.4chan.org/wg/|sed -r 's/.*href="([^"]*).*/\1\n/g'|grep images|xargs wget
+}
+
+##################################################
+# Download all files of a certain type with wget #
+##################################################
+###### usage: wgetall mp3 http://example.com/download/
+#                                                #
+function wgetall() { wget -r -l2 -nd -Nc -A.$@ $@ ; }
+
+##################################################
+# Using PIPEs, Execute a command, convert output #
+# to .png file, upload file to imgur.com, then 	 #
+# returning the address of the .png.		 #
+##################################################
+
+function imgur() { convert label:@- png:-|curl -F "image=@-" -F "key=1913b4ac473c692372d108209958fd15" http://api.imgur.com/2/upload.xml|grep -E -o "<original>(.)*</original>" | grep -E -o "http://i.imgur.com/[^<]*" ; }
+
+##################################################
+# 7 NETWORKING CONNECTIONS IP's                  #
+##################################################
+#
+## check whether or not a port on your box is open
+#                                                #
+function portcheck() { for i in $@;do curl -s "deluge-torrent.org/test-port.php?port=$i" | sed '/^$/d;s/<br><br>/ /g';done; }
+
+##################################################
+# 8 cleanly list available wireless networks (using iwlist)
+##################################################
+#                                                #
+function wscan()
+{
+iwlist wlan0 scan | sed -ne 's#^[[:space:]]*\(Quality=\|Encryption key:\|ESSID:\)#\1#p' -e 's#^[[:space:]]*\(Mode:.*\)$#\1\n#p'
+}
+
+##################################################
+# 9 myip - finds your current IP if your connected to the internet
+##################################################
+#                                                #
+function myip()
+{
+lynx -dump -hiddenlinks=ignore -nolist http://checkip.dyndns.org:8245/ | awk '{ print $4 }' | sed '/^$/d; s/^[ ]*//g; s/[ ]*$//g'
+}
+
+##################################################
+# 10 find the IP addresses that are currently online in your network
+##################################################
+#                                               #
+function localIps()
+{
+for i in {1..254}; do
+	x=`ping -c1 -w1 192.168.1.$i | grep "%" | cut -d"," -f3 | cut -d"%" -f1 | tr '\n' ' ' | sed 's/ //g'`
+	if [ "$x" == "0" ]; then
+		echo "192.168.1.$i"
+	fi
+done
+}
+
+##################################################
+# 11 SHOW IP #copyright 2007 - 2010 Christopher Bratusek
+##################################################
+#                                          #
+function show_ip()
+{
+	case $1 in
+		*help | "" )
+			echo -e "\n${ewhite}Usage:\n"
+			echo -e "${eorange}show_ip${ewhite} |${egreen} <interface> ${eiceblue}[show ip-address for <interface>]\
+			\n${eorange}show_ip${ewhite} |${egreen} external${eiceblue} [show external ip address]\n"
+			tput sgr0
+		;;
+		*external )
+			wget -q -O - http://showip.spamt.net/
+		;;
+		* )
+			LANG=C /sbin/ifconfig $1 | grep 'inet addr:' | cut -d: -f2 | gawk '{ print $1}'
+		;;
+	esac
+}
+
+##################################################
+# 12 show Url information                        #
+##################################################
+# Usage:	url-info "ur"
+# This script is part of nixCraft shell script collection (NSSC)
+# Visit http://bash.cyberciti.biz/ for more information.
+# Modified by Silviu Silaghi (http://docs.opensourcesolutions.ro) to handle
+# more ip adresses on the domains on which this is available (eg google.com or yahoo.com)
+# Last updated on Sep/06/2010
+#                            #
+function url-info()
+{
+doms=$@
+if [ $# -eq 0 ]; then
+echo -e "No domain given\nTry $0 domain.com domain2.org anyotherdomain.net"
+fi
+for i in $doms; do
+_ip=$(host $i|grep 'has address'|awk {'print $4'})
+if [ "$_ip" == "" ]; then
+echo -e "\nERROR: $i DNS error or not a valid domain\n"
+continue
+fi
+ip=`echo ${_ip[*]}|tr " " "|"`
+echo -e "\nInformation for domain: $i [ $ip ]\nQuerying individual IPs"
+ for j in ${_ip[*]}; do
+echo -e "\n$j results:"
+whois $j |egrep -w 'OrgName:|City:|Country:|OriginAS:|NetRange:'
+done
+done
+}
+
+##################################################
+# Miscellaneous Fun. Some might find useful	     #
+##################################################
+#                                                #
+##################################################
+# Create a new script, automatically populating  #
+# the shebang line, editing the script, and 	 #
+# making it executable.				 #
+##################################################
+##
+function shebang() { if i=$(which $1); then printf '#!%s\n\n' $i >  $2 && vim + $2 && chmod 755 $2; else echo "'which' could not find $1, is it in your \$PATH?"; fi; }
+
+###################################
+# 13 print multiplication tables  #
+###################################
+#                                 #
+function multitables()
+{
+for i in {1..9}; do for j in `seq 1 $i`; do echo -ne "${j}x${i}=$((j*i))\t"; done; echo; done
+}
+
+################################################
+# 14 ruler that stretches across the terminal  #
+################################################
+#                                              #
+function ruler() { for s in '....^....|' '1234567890'; do w=${#s}; str=$( for (( i=1; $i<=$(( ($COLUMNS + $w) / $w )) ; i=$i+1 )); do echo -n $s; done ); str=$(echo $str | cut -c -$COLUMNS) ; echo $str; done; }
+
+##################################################
+# Reminder for whatever whenever		 #
+##################################################
+#                                                #
+function remindme()
+{
+sleep $1 && zenity --info --text "$2" &
+}
+
+##################################################
+# Auto send an attachment from CLI		 #
+##################################################
+#                                                #
+function send() {
+echo "File auto-sent from linux." | mutt -s "See Attached File" -a $1 $2
+}
+
+##########################################
+# 15 Arch-wiki-docs simple search	     #
+##########################################
+#                                        #
+function archwikisearch() {
+	# old version
+	# cd /usr/share/doc/arch-wiki/html/
+	# grep -i "$1" index.html | sed 's/.*HREF=.\(.*\.html\).*/\1/g' | xargs opera -newpage
+	cd /usr/share/doc/arch-wiki/html/
+	for i in $(grep -li $1 *)
+	do
+		STRING=`grep -m1 -o 'wgTitle = "[[:print:]]\+"' $i`
+		LEN=${#STRING}
+		let LEN=LEN-12
+		STRING=${STRING:11:LEN}
+		LOCATION="/usr/share/doc/arch-wiki/html/$i"
+		echo -e " \E[33m$STRING   \E[37m$LOCATION"
+	done
+}
+
+##################################################
+# Weather and stuff				 #
+##################################################
+
+##################################################
+# .. GOOGLE WEATHER                              #
+##################################################
+#                                                #
+myweather() { wget -qO- -U '' 'google.com/search?q=weather' | grep -oP '(-)?\d{1,3}\xB0[FC]' ;}
+
+#################################################
+###### 10-day forcast                           #
+#################################################
+# USAGE:	forecast 50315                      #
+function forecast() {
+_ZIP=$1
+
+if   [ $# = 1 ];then
+     printf "$_ZIP\n" | egrep '^[0-9][0-9][0-9][0-9][0-9]$' >>/dev/null
+     if   [ $? = 0 ];then
+          printf "Your 10 Day Weather Forecast as follows:\n";
+          lynx -dump "http://www.weather.com/weather/print/$_ZIP" | sed -n '/%$/s/\[.*\]//p';
+          printf "\n"
+     elif [ $? = 1 ];then
+          printf "Bad ZIP code!\n"
+     fi
+elif [ $# != 1 ];then
+     printf "You need to supply a ZIP code!\n"
+fi
+}
+
+##################################################
+# 16 temperature conversion                      # 
+##################################################
+# script that lets the user enter
+# a temperature in any of Fahrenheit, Celsius or Kelvin and receive the
+# equivalent temperature in the other two units as the output.
+# usage:	convertatemp F100 (if don't put F,C, or K, default is F)
+#                                         #
+function convertatemp()
+{
+if uname | grep 'SunOS'>/dev/null ; then
+  echo "Yep, SunOS, let\'s fix this baby"
+  PATH="/usr/xpg4/bin:$PATH"
+fi
+if [ $# -eq 0 ] ; then
+  cat << EOF >&2
+Usage: $0 temperature[F|C|K]
+where the suffix:
+   F	indicates input is in Fahrenheit (default)
+   C	indicates input is in Celsius
+   K	indicates input is in Kelvin
+EOF
+fi
+unit="$(echo $1|sed -e 's/[-[[:digit:]]*//g' | tr '[:lower:]' '[:upper:]' )"
+temp="$(echo $1|sed -e 's/[^-[[:digit:]]*//g')"
+case ${unit:=F}
+in
+  F ) # Fahrenheit to Celsius formula:  Tc = (F -32 ) / 1.8
+  farn="$temp"
+  cels="$(echo "scale=2;($farn - 32) / 1.8" | bc)"
+  kelv="$(echo "scale=2;$cels + 273.15" | bc)"
+  ;;
+  C ) # Celsius to Fahrenheit formula: Tf = (9/5)*Tc+32
+  cels=$temp
+  kelv="$(echo "scale=2;$cels + 273.15" | bc)"
+  farn="$(echo "scale=2;((9/5) * $cels) + 32" | bc)"
+  ;;
+  K ) # Celsius = Kelvin + 273.15, then use Cels -> Fahr formula
+  kelv=$temp
+  cels="$(echo "scale=2; $kelv - 273.15" | bc)"
+  farn="$(echo "scale=2; ((9/5) * $cels) + 32" | bc)"
+esac
+echo "Fahrenheit = $farn"
+echo "Celsius    = $cels"
+echo "Kelvin     = $kelv"
+}
+
+##################################################
+# 18 convert phone numbers to letters/potentially english words
+# Creator: asmoore82
+##################################################
+#                                                #
+function phone2text()
+{
+echo -n "Enter number: "
+read num
+# Create a list of possibilites for expansion by the shell
+# the "\}" is an ugly hack to get "}" into the replacment string -
+# this is not a clean escape sequence - the litteral "\" is left behind!
+num="${num//2/{a,b,c\}}"
+num="${num//3/{d,e,f\}}"
+num="${num//4/{g,h,i\}}"
+num="${num//5/{j,k,l\}}"
+num="${num//6/{m,n,o\}}"
+num="${num//7/{p,q,r,s\}}"
+num="${num//8/{t,u,v\}}"
+num="${num//9/{w,x,y,z\}}"
+# cleaup from the hack - remove all litteral \'s
+num="${num//\\/}"
+echo ""
+echo "Possible words are:"
+for word in $( eval echo "$num" )
+do
+    echo '>' "$word"
+done
+# End of File
+}
+
+##################################################
+# .. SCREENSHOT FUNCTION W/ SCROT                #
+##################################################
+#                                                #
+# take screenshot fullscreen, single window or draw a box
+# demo video: http://www.youtube.com/watch?v=Hh8G1aBp8gc
+pix() { scrot -d 2 "$PATH_SCREENSHOT/fullscr_`date +'%F_%Hh%Ms%S'`.png" ;}
+pix-winarea() { sleep 2 && scrot -s "$PATH_SCREENSHOT/windowed_`date +'%F_%Hh%Ms%S'`.png" ;}
+# take screenshot ( method 2 )
+pixx() { import -pause 2 -window root "$PATH_SCREENSHOT/fullscr_`date +'%F_%Hh%Ms%S'`.png" ; }
+pixx-winarea() { import -pause 2 "$PATH_SCREENSHOT/windowed_`date +'%F_%Hh%Ms%S'`.png" ;}
+#screenshot-window() { import -pause 2 -frame -strip -quality 75 "$HOME/Pictures/Screenshots/pscreen-win_`date +'%F_%Hh%M'`.png" ;}
+
+##################################################
+# Resizing an image				 #
+##################################################
+
+# USAGE: image_resize "percentage of image resize" "input image" "output image"
+function image_resize()
+{
+convert -sample "$1"%x"$1"% "$2" "$3"
+}
+
+##################################################
+# Resize images					 #
+##################################################
+
+function resizeimg()
+{
+       NAME_="resizeimg"
+       HTML_="batch resize image"
+    PURPOSE_="resize bitmap image"
+    PURPOSE_="resize bitmap image"
+   SYNOPSIS_="$NAME_ [-hlv] -w <n> <file> [file...]"
+   REQUIRES_="standard GNU commands, ImageMagick"
+    VERSION_="1.2"
+       DATE_="2001-04-22; last update: 2004-10-02"
+     AUTHOR_="Dawid Michalczyk <dm@eonworks.com>"
+        URL_="www.comp.eonworks.com"
+   CATEGORY_="gfx"
+   PLATFORM_="Linux"
+      SHELL_="bash"
+ DISTRIBUTE_="yes"
+# This program is distributed under the terms of the GNU General Public License
+usage () {
+echo >&2 "$NAME_ $VERSION_ - $PURPOSE_
+Usage: $SYNOPSIS_
+Requires: $REQUIRES_
+Options:
+     -w <n>, an integer referring to width in pixels; aspect ratio will be preserved
+     -v, verbose
+     -h, usage and options (this help)
+     -l, see this script"
+    exit 1
+}
+gfx_resizeImage() {
+    # arg check
+    [[ $1 == *[!0-9]* ]] && { echo >&2 $1 must be an integer; exit 1; }
+    [ ! -f $2 ] && { echo >&2 file $2 not found; continue ;}
+    # scaling down to value in width
+    mogrify -geometry $1 $2
+}
+# args check
+[ $# -eq 0 ] && { echo >&2 missing argument, type $NAME_ -h for help; exit 1; }
+# var init
+verbose=
+width=
+# option and arg handling
+while getopts vhlw: options; do
+    case $options in
+        v) verbose=on ;;
+        w) width=$OPTARG ;;
+        h) usage ;;
+        l) more $0; exit 1 ;;
+       \?) echo invalid argument, type $NAME_ -h for help; exit 1 ;;
+    esac
+done
+shift $(( $OPTIND - 1 ))
+# check if required command is in $PATH variable
+which mogrify &> /dev/null
+[[ $? != 0 ]] && { echo >&2 the required ImageMagick \"mogrify\" command \
+is not in your PATH variable; exit 1; }
+for a in "$@";do
+    gfx_resizeImage $width $a
+    [[ $verbose ]] && echo ${NAME_}: $a
+done
+}
+
+##################################################################
+# TV/DVD/Video/Audio/Radio/Streams Copying/ripping/extracting	 #
+##################################################################
+#
+##################################################################
+#                            AUDIO                               #
+##################################################################
+#
+##################################################################
+# .. rip audio from video ("$1" for output file & "$2" for input file)         #
+##################################################################
+#                                                                #
+function audioextract()
+{
+mplayer -ao pcm -vo null -vc dummy -dumpaudio -dumpfile "$1" "$2"
+}
+
+##################################################################
+# .. FIX MP3 TAGS ENCODING (TO UTF-8) 
+##################################################################
+# batch fixes all MP3s in one directory
+#                                                                #
+function mp3_tagging()
+{
+find . -iname "*.mp3" -execdir mid3iconv -e <encoding> {} \;
+}
+
+######################################################################
+# .. RECORD AUDIO @ 45 DECIBBLE  OGG FILE                            #
+######################################################################
+# record audio and use sox to eliminate silence
+# outputs an ogg file that only contains the audio signal exceeding -45dB
+# useful for recording radio scanner
+#                                                                    #
+function audiorecord-45dB()
+{
+rec -r 44100 -p | sox -p "audio_name-$(date '+%Y-%m-%d').ogg" silence -l 1 00:00:00.5 -45d -1 00:00:00.5 -45d
+}
+##################################################################
+# .. FLAC2MP3: Author: Josh Bailey Email: jbsnake<at><nospam> usalug.org#
+##################################################################
+#                                                                #
+function flac2mp3()
+# call this like:
+# flac2mp3 /path/to/source/file.flac /path/to/destination
+# needs: getFileName function; flac encoder/decoder; lame
+{
+   local old_file="${1}"
+   local new_dir="${2}"
+   local short_filename=`getFileName "${old_file}"`
+   local new_file="${short_filename:0:${#short_filename}-5}.mp3"
+
+   flac -d -o - "${old_file}" | lame -b 320 -h - > "${new_dir}/${new_file}"
+}
+
+##################################################################
+# .. FLAC2OGG: Author: Josh Bailey Email: jbsnake<at><nospam> usalug.org#
+##################################################################
+#
+function flac2ogg()
+# call this like:
+# flac2ogg /path/to/source/file.flac /path/to/destination
+# needs: getFileName function; flac encoder/decoder; oggenc
+{
+   local old_file="${1}"
+   local new_dir="${2}"
+   local short_filename=`getFileName "${old_file}"`
+   local new_file="${short_filename:0:${#short_filename}-5}.ogg"
+   ###### get artist and album before release #########
+   # flac -d -o - "${old_file}" | oggenc -a "$artist" -l "$album" -t "${title}" - -o "${new_dir}/${new_file}"
+   ####################################################
+   local title="${short_filename:0:${#short_filename}-4}"
+
+   flac -d -o - "${old_file}" | oggenc -t "${title}" - -o "${new_dir}/${new_file}"
+}
+
+#alias flvaudio='ffmpeg -i "$1" -f mp3 -vn -acodec copy output.mp3'			# extract sound from flv & make mp3
+
+##################################################################
+# .. OGG2MP3 Author: Josh Bailey Email: jbsnake<at><nospam> usalug.org#
+##################################################################
+#                                                                #
+function ogg2mp3()
+# call this like:
+# ogg2mp3 /path/to/source/file.flac /path/to/destination
+# needs: getFileName function; oggdec; lame
+{
+   local old_file="${1}"
+   local new_dir="${2}"
+   local short_filename=`getFileName "${old_file}"`
+   local new_file="${short_filename:0:${#short_filename}-4}.mp3"
+   local info_string=`get_ogg_info "$old_file"`
+   local cartist=`cut -d| -f1 ${info_string}`
+   local ctitle=`cut -d| -f2 ${info_string}`
+   local calbum=`cut -d| -f3 ${info_string}`
+   local cgenre=`cut -d| -f4 ${info_string}`
+   local cdate=`cut -d| -f5 ${info_string}`
+   local ctracknumber=`cut -d| -f6 ${info_string}`
+
+   oggdec "${old_file}" -o - | lame  -b 320 --tt "$ctitle" --ta "$cartist" --tl "$calbum" --ty $cdate --tn $ctracknumber --tg "$cgenre" -h - > "${new_dir}/${new_file}"
+   sleep .5
+}
+
+##################################################################
+# .. OGG_INFO Author: Josh Bailey Email: jbsnake<at><nospam> usalug.org#
+##################################################################
+#                                                                #
+function ogg_info()
+# call this like:
+# ogg_info_string=`get_ogg_info "/path/to/file.ogg"`
+# ofcourse the string would have to be parsed
+# it is pipe | delimited
+# in order artist, title, album, genre, date, and track number
+# inStr function needed; vorbiscomment (comes with oggenc)
+{
+   local turn=""
+   local index=0
+   local item=""
+   local cartist=""
+   local ctitle=""
+   local calbum=""
+   local cgenre=""
+   local cdate=""
+   local ctracknumber=""
+
+   vorbiscomment -l "$1" > info.lst
+   for turn in artist title album genre date tracknumber
+   do
+      tmp_comment=`grep -i "$turn" info.lst`
+      item=`inStr "=" "$tmp_comment"`
+      comment=${tmp_comment:${item}+1}
+      ((index++))
+      case $index in
+      1)   cartist="$comment";
+         ;;
+      2)   ctitle="$comment";
+         ;;
+      3)   calbum="$comment";
+         ;;
+      4)   cgenre="$comment";
+         ;;
+      5)   cdate="$comment";
+         ;;
+      6)   ctracknumber="$comment";
+         ;;
+      esac
+   done
+   info="${cartist}|${ctitle}|${calbum}|${cgenre}|${cdate}|${ctracknumber}"
+   echo "${info}"
+   rm -f info.lst
+}
+
+
+#
+##################################################################
+#                            VIDEO                               #
+##################################################################
+#
+##################################################
+# Screencasting with mplayer webcam window	 #
+##################################################
+#                                                #
+function screencastw()
+{
+mplayer -cache 128 -tv driver=v4l2:width=176:height=177 -vo xv tv:// -noborder -geometry "95%:93%" -ontop | ffmpeg -y -f alsa -ac 2 -i pulse -f x11grab -r 30 -s `xdpyinfo | grep 'dimensions:'|awk '{print $2}'` -i :0.0 -acodec pcm_s16le output.wav -an -vcodec libx264 -vpre lossless_ultrafast -threads 0 output.mp4
+}
+
+###################################################################################################################
+# mplayer to display webcam; hit 's' to take screenshot https://wiki.archlinux.org/index.php/Webcam_Setup#MPlayer #
+###################################################################################################################
+#                                                                                                                 #
+webcam-mplayer() { mplayer tv:// -tv driver=v4l2:width=640:height=480:device=/dev/video0 -fps 15 -vf screenshot ;}
+
+##################################################
+# Convert bluray to xvid			             #
+##################################################
+#                                                #
+function bluray2xvid()
+# example: bluray2xvid bluraydisc.m2ts desired_name.avi
+{
+mencoder $1 -oac mp3lame -lameopts cbr:br=128 -ofps 24 -vf harddup -vf scale=1280:720 -ovc xvid -xvidencopts fixed_quant=3 -o $2
+}
+
+######################################
+# 19 DVD to ISO #/ alias dvdcopy='dvd2iso'
+######################################
+#                                    #
+function dvd2iso()
+{
+# to get desired device
+df -h -x tmpfs -x usbfs
+echo -n "Using the information in the terminal window, please enter the appropriate DVD drive:
+"
+read DVDDEVICE
+echo -n "Please enter a name for the ISO file you will create:
+"
+read XVIDNAME
+pv "$DVDDEVICE" | dd of="$XVIDNAME".iso
+}
+
+#######################################
+# 20 DVD to MPG #/alias dvd2mpeg='dvd2mpg' 
+#######################################
+#                                     #
+function dvd2mpg() ## '#
+{
+# to get desired device
+df -h -x tmpfs -x usbfs
+echo -n "Using the information in the terminal window, please enter the appropriate DVD drive:
+"
+read DVDDEVICE
+# to get desired title on dvd
+# requires lsdvd: install lsdvd
+lsdvd "$DVDDEVICE"
+echo -n "Using the information in the terminal window, please enter the title number you will convert (usually the longest one):
+"
+read DVDTITLE
+echo -n "Please enter a name for the MPG/MPEG file you will convert:
+"
+read MPEGNAME
+mplayer dvd://"$DVDTITLE" -dumpstream -alang es -dumpfile "$MPEGNAME".mpg
+}
+ 
+#######################################
+# 21 DVD to VOB #/ alias dvd2vob='dvd2mpg'
+#######################################
+# requires vobcopy: install vobcopy
+# alias dvd2vob='vobcopy -i /dev/dvd -o ~/ -l'
+# extract audio from DVD VOB files
+# USAGE:	dvdaudio input_file.vob output_file.ac3
+#                                     #
+function dvdaudio()
+{
+echo -n "Please enter the name (full path) for the MPG/MPEG/VOB file you will extract the audio from:
+"
+read VOBNAME
+echo -n "Please enter a name for the audio file you will extract from the MPG/MPEG/VOB file:
+"
+read AC3NAME
+mplayer "$VOBNAME" -aid 128 -dumpaudio -dumpfile "$AC3NAME"
+}
+
+################################
+# 22 VIDEO TO AVI: #/ alias dvdrip='video2avi' or alias rip='video2avi'#
+################################
+#                              #
+function video2avi()
+{
+# Video To Avi
+# Created:	Inameiname
+# Version:	3.2
+####################### Run in the terminal on double-click
+tty -s; if [ $? -ne 0 ] ; then gnome-terminal -e "$0"; exit; fi
+####################### If it doesn't run in the terminal on double-click, say so
+[ -t 0 ] && [ -t 1 ] || { zenity --warning --text="${0}: this script must be run from a terminal." ; exit 1 ;}
+####################### Check whether environment variables are empty
+###### see if the Nautilus environment variable is empty
+# if it exists, set it equal to 'INPUT_FILE'
+for ARCHIVE_FULLPATH in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS; do
+    ARCHIVE_PATH=${ARCHIVE_FULLPATH%.*}
+if [ -f $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS ] ; then
+# if select iso file:
+if [ $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS = $ARCHIVE_PATH.iso ] ; then
+# to get desired title on dvd
+# requires lsdvd: install lsdvd
+lsdvd $ARCHIVE_PATH.iso
+echo -n "Please enter the title number you will convert (usually the longest one):
+
+Press 'Enter' for default (default is '1')...
+
+"
+read TITLE
+# extra blank space
+echo "
+"
+# default
+if [[ -z $TITLE ]] ; then
+# If no title passed, default to 1
+    TITLE=1
+fi
+    INPUT_FILE="dvd://$TITLE -dvd-device $ARCHIVE_PATH.iso"
+fi
+# if select video file:
+if [ $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS != $ARCHIVE_PATH.iso ] ; then
+    INPUT_FILE=$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
+fi
+fi
+done
+# if it's blank, set it equal to $1
+if [ -z $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS ] ; then
+    # If it's blank, set it equal to $1
+    NAUTILUS_SCRIPT_SELECTED_FILE_PATHS=$1
+###### see if the '$1' variable is empty
+# if it exists, set it equal to 'INPUT_FILE'
+for ARCHIVE_FULLPATH in $1; do
+    ARCHIVE_PATH=${ARCHIVE_FULLPATH%.*}
+if [ -f $1 ] ; then
+# if select iso file:
+if [ $1 = $ARCHIVE_PATH.iso ] ; then
+# to get desired title on dvd
+# requires lsdvd: install lsdvd
+lsdvd $ARCHIVE_PATH.iso
+echo -n "Please enter the title number you will convert (usually the longest one):
+
+Press 'Enter' for default (default is '1')...
+
+"
+read TITLE
+# extra blank space
+echo "
+"
+# default
+if [[ -z $TITLE ]] ; then
+# If no title passed, default to 1
+    TITLE=1
+fi
+    INPUT_FILE="dvd://$TITLE -dvd-device $ARCHIVE_PATH.iso"
+fi
+# if select video file:
+if [ $1 != $ARCHIVE_PATH.iso ] ; then
+    INPUT_FILE=$1
+fi
+fi
+done
+# if it's blank, do the following:
+if [ -z "$1" ] ; then
+####################### Input DVD/ISO/VIDEO file menu
+echo -n "What do you want to convert to AVI?:
+
+(1) DVD
+(2) ISO file
+(3) Video file (such as MKV, VOB, MPEG, AVI, WMV, and etc.)
+
+Press 'Enter' for default (default is '1')...
+
+"
+read TYPE
+# extra blank space
+echo "
+"
+###### Input DVD/ISO/VIDEO source default ######
+if [[ -z $TYPE ]] ; then
+    # If no media passed, default to 1
+    TYPE=1
+fi
+###### Input DVD/ISO/VIDEO source ######
+###### DVD to AVI
+if [[ $TYPE = 1 ]] ; then
+# to get desired device
+df -h -x tmpfs -x usbfs
+echo -n "Please enter the appropriate DVD drive:
+
+(1) /dev/dvd
+(2) /dev/sr0
+(3) /dev/sr1
+(4) /dev/sr2
+(5) custom
+
+Press 'Enter' for default (default is '1')...
+
+"
+read DEVICE_NUMBER
+# extra blank space
+echo "
+"
+# default
+if [[ -z $DEVICE_NUMBER ]] ; then
+# If no device passed, default to /dev/dvd
+    DEVICE=/dev/dvd
+fi
+# preset
+if [[ $DEVICE_NUMBER = 1 ]] ; then
+    DEVICE=/dev/dvd
+fi
+if [[ $DEVICE_NUMBER = 2 ]] ; then
+    DEVICE=/dev/sr0
+fi
+if [[ $DEVICE_NUMBER = 3 ]] ; then
+    DEVICE=/dev/sr1
+fi
+if [[ $DEVICE_NUMBER = 4 ]] ; then
+    DEVICE=/dev/sr2
+fi
+# custom
+if [[ $DEVICE_NUMBER = 5 ]] ; then
+    echo -n "Please enter the appropriate DVD drive:  "
+    echo -n "...like this: '/dev/dvd'..."
+    read CUSTOM_DEVICE
+    DEVICE=$CUSTOM_DEVICE
+fi
+# to get desired title on dvd
+# requires lsdvd: install lsdvd
+lsdvd $DEVICE
+echo -n "Please enter the title number you will convert (usually the longest one):
+
+Press 'Enter' for default (default is '1')...
+
+"
+read TITLE
+# extra blank space
+echo "
+"
+# default
+if [[ -z $TITLE ]] ; then
+# If no title passed, default to 1
+TITLE=1
+fi
+# to decide to copy straight from the DVD or first copy to hard drive to ISO
+echo -n "Would you first like to copy the DVD onto your hard drive (to ISO)?:
+
+(1) Yes (Highly Recommended)
+(2) No
+
+Press 'Enter' for default (default is '1')...
+
+"
+read DVD2ISO
+# extra blank space
+echo "
+"
+# default
+if [[ -z $DVD2ISO ]] ; then
+# If no DVD2ISO passed, default to 1
+dd if=$DEVICE of=NEW.iso
+INPUT_FILE="dvd://$TITLE -dvd-device NEW.iso"
+fi
+# preset
+if [[ $DVD2ISO = 1 ]] ; then
+dd if=$DEVICE of=NEW.iso
+INPUT_FILE="dvd://$TITLE -dvd-device NEW.iso"
+fi
+if [[ $DVD2ISO = 2 ]] ; then
+INPUT_FILE="dvd://$TITLE -dvd-device $DEVICE"
+fi
+fi
+###### ISO to AVI
+if [[ $TYPE = 2 ]] ; then
+echo -n "Please enter the full path for the ISO:
+
+Example: /home/(your username)/Videos/NEW.iso...
+
+"
+read ISO
+# extra blank space
+echo "
+"
+# to get desired title on dvd
+# requires lsdvd: install lsdvd
+lsdvd $ISO
+echo -n "Please enter the title number you will convert (usually the longest one):
+
+Press 'Enter' for default (default is '1')...
+
+"
+read TITLE
+# extra blank space
+echo "
+"
+# default
+if [[ -z $TITLE ]] ; then
+# If no title passed, default to 1
+TITLE=1
+fi
+INPUT_FILE="dvd://$TITLE -dvd-device $ISO"
+fi
+###### Video to AVI
+if [[ $TYPE = 3 ]] ; then
+echo -n "Please enter the name for the input file (full path, with extension):
+
+It can be any type, such as MKV, VOB, MPEG, AVI, WMV, and etc...
+
+Example: /home/(your username)/Videos/NEW.avi...
+
+"
+read VIDEO_FILE
+# extra blank space
+echo "
+"
+INPUT_FILE=$VIDEO_FILE
+fi
+####################### Close the variable statements
+fi
+fi
+####################### Cropping (done automatically)
+###### start a timer to kill mplayer
+echo "Cropdetect is now running...
+
+A few seconds of your video should now be playing...
+"
+###### start a timer to kill mplayer
+(sleep 6 && killall mplayer)&
+###### start the mplayer cropdetect on on the DVD at a random time
+mplayer $INPUT_FILE -ss 0:03:10 -vf cropdetect &> mplayer.tmp
+###### get last crop value from mplayer output and store in variable
+CROP_VALUES=$(awk -F'crop=' '/\[CROP\]/{f=$2} END{print f}' ./mplayer.tmp |cut -d')' -f1)
+###### print detected crop values
+echo -e "\n\nDetected crop values = ${CROP_VALUES}\n\n"
+####################### Output desired name for file
+###### file input
+echo -n "Please enter a name for the output file (without extension):
+
+Press 'Enter' for default (default is 'NEW')...
+
+"
+read OUTPUT_FILE
+###### extra blank space
+echo "
+"
+###### default ######
+if [[ -z $OUTPUT_FILE ]] ; then
+    # If no file passed, default to NEW
+    OUTPUT_FILE=NEW_$(date "+%y.%m.%d_%H.%M")
+fi
+####################### Available processor number (done automatically)
+CPUS=$(grep -c processor /proc/cpuinfo)
+echo "Using $CPUS processor(s)..."
+###### extra blank space
+echo "
+"
+####################### Preset/Custom type options
+echo -n "Select a quality level:
+(1) exact copy quality MPEG		    (DVD/ISO sources only)
+(2) exact copy audio-only quality AC3	    (DVD/ISO sources only)
+(3) very high quality H.264 (2-pass)	    (350min:105min film w/2 1.5mhz cpus)
+(4) very high quality DIVX/MPEG-4 (2-pass)  (270min:105min film w/2 1.5mhz cpus)
+(5) very high quality XVID (2-pass)	    (220min:105min film w/2 1.5mhz cpus)
+(6) very high quality H.264 (1-pass)	    (400min:105min film w/2 1.5mhz cpus)
+(7) very high quality DIVX/MPEG-4 (1-pass)  (230min:105min film w/2 1.5mhz cpus)
+(8) very high quality XVID (1-pass)	    (180min:105min film w/2 1.5mhz cpus)
+(9) high quality H.264 (2-pass)		    (240min:105min film w/2 1.5mhz cpus)
+(10)high quality DIVX/MPEG-4 (2-pass)	    (190min:105min film w/2 1.5mhz cpus)
+(11)high quality XVID (2-pass)		    (135min:105min film w/2 1.5mhz cpus)
+(12)high quality H.264 (1-pass)	     	    (200min:105min film w/2 1.5mhz cpus)
+(13)high quality DIVX/MPEG-4 (1-pass)	    (150min:105min film w/2 1.5mhz cpus)
+(14)high quality XVID (1-pass)		    (090min:105min film w/2 1.5mhz cpus)
+(15)fast quality H.264 (1-pass)	     	    (155min:105min film w/2 1.5mhz cpus)
+(16)fast quality DIVX/MPEG-4 (1-pass)	    (065min:105min film w/2 1.5mhz cpus)
+(17)fast quality XVID (1-pass)		    (065min:105min film w/2 1.5mhz cpus)
+(18)fast quality XVID YouTube (1-pass)	    (025min:105min film w/2 1.5mhz cpus)
+(19)realtime quality DIVX/MPEG-4 (1-pass)   (050min:105min film w/2 1.5mhz cpus)
+(20)realtime quality XVID (1-pass)	    (060min:105min film w/2 1.5mhz cpus)
+(21)low quality WMV (1-pass)		    (017min:105min film w/2 1.5mhz cpus)
+(22)custom quality
+Press 'Enter' for default (default is '14')...  "
+read Q
+###### extra blank space
+echo "
+"
+###### default ######
+if [[ -z $Q ]] ; then
+    # If no quality passed, default to 14
+    Q=14
+fi
+####################### Frame rate
+###### frame rate menu
+if [[ $Q != 1 && $Q != 2 ]] ; then
+echo -n "Select a frame rate level:
+
+(1) NTSC-VIDEO 	(~ 30 fps)
+(2) NTSC-FILM	(~ 24 fps)
+(3) PAL		(~ 25 fps)
+(4) Streaming	(~ 15 fps)
+(5) custom
+
+Press 'Enter' for default (default is '2')...
+
+"
+read FRAME_RATE_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $FRAME_RATE_NUMBER ]] ; then
+    # If no frame rate passed, default to 2
+    FRAME_RATE="-ofps 24000/1001"
+fi
+###### preset
+if [[ $FRAME_RATE_NUMBER = 1 ]] ; then
+    FRAME_RATE="-ofps 30000/1001"
+fi
+if [[ $FRAME_RATE_NUMBER = 2 ]] ; then
+    FRAME_RATE="-ofps 24000/1001"
+fi
+if [[ $FRAME_RATE_NUMBER = 3 ]] ; then
+    FRAME_RATE="-ofps 25000/1001"
+fi
+if [[ $FRAME_RATE_NUMBER = 4 ]] ; then
+    FRAME_RATE="-ofps 15000/1001"
+fi
+###### custom
+if [[ $FRAME_RATE_NUMBER = 5 ]] ; then
+    echo -n "Please enter a frame rate:  "
+    echo -n "...like this: '-ofps 15000/1001'..."
+    read CUSTOM_FRAME_RATE
+    FRAME_RATE=$CUSTOM_FRAME_RATE
+fi
+fi
+####################### Divx ffourcc menu
+###### DivX ffourcc menu
+if [[ $Q != 1 && $Q != 2 && $Q != 3 && $Q != 5 && $Q != 6 && $Q != 8 && $Q != 9 && Q != 11 && $Q != 12 && $Q != 14 && $Q != 15 && $Q != 17 && $Q != 18 && $Q != 20 && $Q != 21 && $Q != 22 ]] ; then
+echo -n "Select the desired Divx or generic MPEG4 quality:
+
+(1) FFMPEG MPEG-4
+(2) DivX MPEG-4 Version 4
+(3) DivX MPEG-4 Version 5
+
+Press 'Enter' for default (default is '3')...
+
+"
+read DIVX_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $DIVX_NUMBER ]] ; then
+    # If no file passed, default to 3
+    DIVX="-ffourcc DX50"
+fi
+###### preset
+if [[ $DIVX_NUMBER = 1 ]] ; then
+    DIVX=
+fi
+if [[ $DIVX_NUMBER = 2 ]] ; then
+    DIVX="-ffourcc DIVX"
+fi
+if [[ $DIVX_NUMBER = 3 ]] ; then
+    DIVX="-ffourcc DX50"
+fi
+fi
+####################### Conversion is starting
+###### conversion is starting message
+if [[ $Q != 22 ]] ; then
+read -sn 1 -p "Your conversion is about to begin, press any key to continue..."
+fi
+###### extra blank space
+echo "
+"
+####################### Conversions
+###### preset ######
+###### exact copy quality (DVD/ISO sources only)
+if [[ $Q = 1 ]] ; then
+# If 1 passed, use MPEG exact copy quality
+mplayer $INPUT_FILE -dumpstream -dumpfile $OUTPUT_FILE.mpg
+fi
+if [[ $Q = 2 ]] ; then
+# If 2 passed, use MPEG exact copy audio-only quality
+mplayer $INPUT_FILE -dumpaudio -dumpfile $OUTPUT_FILE.ac3
+fi
+###### very high quality
+if [[ $Q = 3 ]] ; then
+# very high H.264 quality (2-pass)
+# actual two-pass conversion
+mencoder $INPUT_FILE -nosound -ovc x264 -x264encopts pass=1:subq=1:partitions=all:8x8dct:me=umh:frameref=1:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=2000 -vf pp=de,pullup,softskip,harddup,crop=${CROP_VALUES} $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=192:vol=3 -ovc x264 -x264encopts pass=2:subq=6:partitions=all:8x8dct:me=umh:frameref=5:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=2000 -vf pp=de,pullup,softskip,harddup,crop=${CROP_VALUES} $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 4 ]] ; then
+# very high MPEG4 quality (2-pass)
+# actual two-pass conversion
+mencoder $INPUT_FILE -nosound -ovc lavc $DIVX -lavcopts vpass=1:vcodec=mpeg4:mbd=2:trell:v4mv:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:cmp=3:subcmp=3:precmp=0:vqcomp=0.6:turbo:vhq:threads=$CPUS:vbitrate=2000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES} $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=192:vol=3 -ovc lavc $DIVX -lavcopts vpass=2:vcodec=mpeg4:mbd=2:mv0:trell:v4mv:cbp:last_pred=3:predia=2:dia=2:vmax_b_frames=2:vb_strategy=1:precmp=2:cmp=2:subcmp=2:preme=2:qns=2:vhq:threads=$CPUS:vbitrate=2000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES} $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 5 ]] ; then
+# very high XVID quality (2-pass)
+# actual two-pass conversion
+mencoder $INPUT_FILE -nosound -ovc xvid -xvidencopts pass=1:chroma_opt:vhq=1:bvhq=1:quant_type=mpeg:threads=$CPUS:bitrate=2000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES} $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=192:vol=3 -ovc xvid -xvidencopts pass=2:chroma_opt:vhq=4:bvhq=1:quant_type=mpeg:threads=$CPUS:bitrate=2000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES} $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 6 ]] ; then
+# very high H.264 quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=192:vol=3 -ovc x264 -x264encopts subq=6:partitions=all:8x8dct:me=umh:frameref=5:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=2000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES} $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 7 ]] ; then
+# very high MPEG4 quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=192:vol=3 -ovc lavc $DIVX -lavcopts vcodec=mpeg4:mbd=2:mv0:trell:v4mv:cbp:last_pred=3:predia=2:dia=2:vmax_b_frames=2:vb_strategy=1:precmp=2:cmp=2:subcmp=2:preme=2:qns=2:vhq:threads=$CPUS:vbitrate=2000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES} $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 8 ]] ; then
+# very high XVID quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=192:vol=3 -ovc xvid -xvidencopts chroma_opt:vhq=4:bvhq=1:quant_type=mpeg:threads=$CPUS:bitrate=2000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES} $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+###### high quality
+if [[ $Q = 9 ]] ; then
+# high H.264 quality (2-pass)
+# actual two-pass conversion
+mencoder $INPUT_FILE -nosound -ovc x264 -x264encopts pass=1:subq=1:partitions=all:8x8dct:me=umh:frameref=1:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=-700000 -vf pp=de,pullup,softskip,harddup,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc x264 -x264encopts pass=2:subq=5:8x8dct:frameref=2:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=1200 -vf pp=de,pullup,softskip,harddup,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 10 ]] ; then
+# high MPEG4 quality (2-pass)
+# actual two-pass conversion
+mencoder $INPUT_FILE -nosound -ovc lavc $DIVX -lavcopts vpass=1:vcodec=mpeg4:mbd=2:trell:v4mv:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:cmp=3:subcmp=3:precmp=0:vqcomp=0.6:turbo:vhq:threads=$CPUS:vbitrate=1100 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc lavc $DIVX -lavcopts vpass=2:vcodec=mpeg4:mbd=2:trell:v4mv:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:cmp=3:subcmp=3:precmp=0:vqcomp=0.6:turbo:vhq:threads=$CPUS:vbitrate=1100 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 11 ]] ; then
+# high XVID quality (2-pass)
+# actual two-pass conversion
+mencoder $INPUT_FILE -nosound -ovc xvid -xvidencopts pass=1:vhq=1:bvhq=1:chroma_opt:quant_type=mpeg:threads=$CPUS:bitrate=-700000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc xvid -xvidencopts pass=2:vhq=2:bvhq=1:chroma_opt:quant_type=mpeg:threads=$CPUS:bitrate=-700000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 12 ]] ; then
+# high H.264 quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc x264 -x264encopts subq=5:8x8dct:frameref=2:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=-700000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 13 ]] ; then
+# high MPEG4 quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc lavc $DIVX -lavcopts vcodec=mpeg4:mbd=2:trell:v4mv:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:cmp=3:subcmp=3:precmp=0:vqcomp=0.6:turbo:vhq:threads=$CPUS:vbitrate=1100 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 14 ]] ; then
+# high XVID quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc xvid -xvidencopts vhq=2:bvhq=1:chroma_opt:quant_type=mpeg:threads=$CPUS:bitrate=-700000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+###### fast quality
+if [[ $Q = 15 ]] ; then
+# fast H.264 quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc x264 -x264encopts subq=4:8x8dct:bframes=2:b_pyramid=normal:weight_b:threads=auto:bitrate=-700000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 16 ]] ; then
+# fast MPEG4 quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc lavc $DIVX -lavcopts vcodec=mpeg4:mbd=2:trell:v4mv:turbo:vhq:threads=$CPUS:vbitrate=1100 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 17 ]] ; then
+# fast XVID quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc xvid -xvidencopts turbo:vhq=0:threads=$CPUS:bitrate=-700000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+###### YouTube quality
+if [[ $Q = 18 ]] ; then
+# YouTube MPEG4 quality (1-pass)
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc lavc $DIVX -lavcopts vcodec=mpeg4:threads=$CPUS -ffourcc xvid -vf scale=320:-2,expand=:240:::1 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+###### realtime quality
+if [[ $Q = 19 ]] ; then
+# realtime MPEG4 quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc lavc $DIVX -lavcopts vcodec=mpeg4:mbd=2:turbo:vhq:threads=$CPUS:vbitrate=1100 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $Q = 20 ]] ; then
+# realtime XVID quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts abr:br=128:vol=3 -ovc xvid -xvidencopts turbo:nochroma_me:notrellis:max_bframes=0:vhq=0:threads=$CPUS:bitrate=-700000 -vf pp=de,pullup,softskip,crop=${CROP_VALUES},scale -zoom -xy 624 $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+###### low quality
+if [[ $Q = 21 ]] ; then
+# low WMV quality (1-pass)
+# actual one-pass conversion
+mencoder $INPUT_FILE -oac mp3lame -lameopts cbr:br=16:vol=3 -ovc lavc -lavcopts vcodec=wmv2:vbitrate=100 -vf scale -zoom -xy 240 $FRAME_RATE -o $OUTPUT_FILE.wmv
+fi
+####################### Custom quality
+if [[ $Q = 22 ]] ; then
+# If 22 passed, use custom quality (1-pass and 2-pass)
+####################### Custom type options
+echo -n "What type of AVI do you want to create with custom settings?:
+
+(1)  H.264		(2-Pass)
+(2)  H.264		(1-Pass)
+(3)  DIVX/MPEG-4	(2-Pass)
+(4)  DIVX/MPEG-4	(1-Pass)
+(5)  XVID		(2-Pass)
+(6)  XVID		(1-Pass)
+
+
+Press 'Enter' for default (default is '6')...
+
+"
+read MPEG4_TYPE
+###### extra blank space
+echo "
+"
+###### default ######
+if [[ -z $MPEG4_TYPE ]] ; then
+    # If no media passed, default to 6
+    MPEG4_TYPE=6
+fi
+####################### Custom Divx ffourcc menu
+###### DivX ffourcc menu
+if [[ $MPEG4_TYPE != 1 && $MPEG4_TYPE != 2 && $MPEG4_TYPE != 5 && $MPEG4_TYPE != 6 ]] ; then
+echo -n "Select the desired Divx or generic MPEG4 quality:
+
+(1) FFMPEG MPEG-4
+(2) DivX MPEG-4 Version 4
+(3) DivX MPEG-4 Version 5
+
+Press 'Enter' for default (default is '3')...
+
+"
+read CUSTOM_DIVX_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $CUSTOM_DIVX_NUMBER ]] ; then
+    # If no file passed, default to 3
+    CUSTOM_DIVX="-ffourcc DX50"
+fi
+###### preset
+if [[ $CUSTOM_DIVX_NUMBER = 1 ]] ; then
+    CUSTOM_DIVX=
+fi
+if [[ $CUSTOM_DIVX_NUMBER = 2 ]] ; then
+    CUSTOM_DIVX="-ffourcc DIVX"
+fi
+if [[ $CUSTOM_DIVX_NUMBER = 3 ]] ; then
+    CUSTOM_DIVX="-ffourcc DX50"
+fi
+fi
+####################### Custom scaling
+echo -n "Choose a resolution:
+
+(1)  original resolution(cropped, but no scaling)
+(2)  624 x 352 scaling	(fullscreen/widescreen)
+(3)  624 x ??? scaling	(fullscreen/widescreen)	(auto-height)
+(4)  800 x 600 scaling	(fullscreen)
+(5)  800 x ??? scaling	(fullscreen) 		(auto-height)
+(6)  600 x 400 scaling	(widescreen)
+(7)  600 x ??? scaling	(widescreen) 		(auto-height)
+(8)  640 x 480 scaling	(fullscreen)
+(9)  640 x ??? scaling	(fullscreen) 		(auto-height)
+(10) 704 x 294 scaling	(widescreen) (2.35:1)
+(11) 704 x ??? scaling	(widescreen) (2.35:1) 	(auto-height)
+(12) 768 x 432 scaling	(widescreen) (16:9)
+(13) 768 x ??? scaling	(widescreen) (16:9) 	(auto-height)
+(14) custom
+
+Press 'Enter' for default (default is '3')...
+
+"
+read SCALING_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $SCALING_NUMBER ]] ; then
+    # If no file passed, default to 3
+    SCALING="scale -zoom -xy 624"
+fi
+###### preset
+if [[ $SCALING_NUMBER = 1 ]] ; then
+    SCALING="scale=${CROP_VALUES}"
+fi
+if [[ $SCALING_NUMBER = 2 ]] ; then
+    SCALING="scale=624:352"
+fi
+if [[ $SCALING_NUMBER = 3 ]] ; then
+    SCALING="scale -zoom -xy 624"
+fi
+if [[ $SCALING_NUMBER = 4 ]] ; then
+    SCALING="scale=800:600"
+fi
+if [[ $SCALING_NUMBER = 5 ]] ; then
+    SCALING="scale -zoom -xy 800"
+fi
+if [[ $SCALING_NUMBER = 6 ]] ; then
+    SCALING="scale=600:400"
+fi
+if [[ $SCALING_NUMBER = 7 ]] ; then
+    SCALING="scale -zoom -xy 600"
+fi
+if [[ $SCALING_NUMBER = 8 ]] ; then
+    SCALING="scale=640:480"
+fi
+if [[ $SCALING_NUMBER = 9 ]] ; then
+    SCALING="scale -zoom -xy 640"
+fi
+if [[ $SCALING_NUMBER = 10 ]] ; then
+    SCALING="scale=704:294"
+fi
+if [[ $SCALING_NUMBER = 11 ]] ; then
+    SCALING="sscale -zoom -xy 704"
+fi
+if [[ $SCALING_NUMBER = 12 ]] ; then
+    SCALING="scale=768:432"
+fi
+if [[ $SCALING_NUMBER = 13 ]] ; then
+    SCALING="scale -zoom -xy 768"
+fi
+###### custom
+if [[ $SCALING_NUMBER = 14 ]] ; then
+    echo -n "Please enter a custom scale:  "
+    echo -n "...like this: 'scale=800:600' or 'scale -zoom -xy 624'..."
+    read CUSTOM_SCALING
+    SCALING=$CUSTOM_SCALING
+fi
+####################### Custom total/video bitrate level
+echo -n "Select a total/video bitrate level:
+
+(1)  -350000	(= max file size of ~ 350MB)	(H.264/XVID only)
+(2)  -700000	(= max file size of ~ 700MB)	(H.264/XVID only)
+(3)  -1000000	(= max file size of ~ 1GB)	(H.264/XVID only)
+(4)  400 kbps
+(5)  600 kbps
+(6)  800 kbps
+(7)  1000 kbps
+(8)  1100 kbps
+(9)  1150 kbps
+(10) 1200 kbps
+(11) 1250 kbps
+(12) 1500 kbps
+(13) 2000 kbps
+(14) 3000 kbps
+(15) 4000 kbps
+(16) 5000 kbps
+(17) custom
+
+Press 'Enter' for default (default is '2')...
+
+"
+read BITRATE_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $BITRATE_NUMBER ]] ; then
+    # If no file passed, default to 2
+    BITRATE=-700000
+fi
+###### preset
+if [[ $BITRATE_NUMBER = 1 ]] ; then
+    BITRATE=-350000
+fi
+if [[ $BITRATE_NUMBER = 2 ]] ; then
+    BITRATE=-700000
+fi
+if [[ $BITRATE_NUMBER = 3 ]] ; then
+    BITRATE=-1000000
+fi
+if [[ $BITRATE_NUMBER = 4 ]] ; then
+    BITRATE=400
+fi
+if [[ $BITRATE_NUMBER = 5 ]] ; then
+    BITRATE=600
+fi
+if [[ $BITRATE_NUMBER = 6 ]] ; then
+    BITRATE=800
+fi
+if [[ $BITRATE_NUMBER = 7 ]] ; then
+    BITRATE=1000
+fi
+if [[ $BITRATE_NUMBER = 8 ]] ; then
+    BITRATE=1100
+fi
+if [[ $BITRATE_NUMBER = 9 ]] ; then
+    BITRATE=1150
+fi
+if [[ $BITRATE_NUMBER = 10 ]] ; then
+    BITRATE=1200
+fi
+if [[ $BITRATE_NUMBER = 11 ]] ; then
+    BITRATE=1250
+fi
+if [[ $BITRATE_NUMBER = 12 ]] ; then
+    BITRATE=1500
+fi
+if [[ $BITRATE_NUMBER = 13 ]] ; then
+    BITRATE=2000
+fi
+if [[ $BITRATE_NUMBER = 14 ]] ; then
+    BITRATE=3000
+fi
+if [[ $BITRATE_NUMBER = 15 ]] ; then
+    BITRATE=4000
+fi
+if [[ $BITRATE_NUMBER = 16 ]] ; then
+    BITRATE=5000
+fi
+###### custom
+if [[ $BITRATE_NUMBER = 17 ]] ; then
+    echo -n "Please enter a custom total/video bitrate:  "
+    echo -n "...like this: '1175'..."
+    read CUSTOM_BITRATE
+    BITRATE=$CUSTOM_BITRATE
+fi
+####################### Custom audio track
+echo -n "Select an audio track:
+
+(1) -aid 0	(good when getting no audio with others) (ex.: Custom DVD rips)
+(2) -aid 127
+(3) -aid 128	(often main language non-director's commentary audio track)
+(4) -aid 129	(often second track, such as director's commentary)
+(5) -aid 130
+(6) -aid 131
+(7) -aid 132
+(8) -aid 160
+(9) custom
+
+Press 'Enter' for default (default is 'null', which is DVD default)...
+
+"
+read AUDIO_TRACK_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $AUDIO_TRACK_NUMBER ]] ; then
+    # If no file passed, default to null
+    AUDIO_TRACK=
+fi
+###### preset
+if [[ $AUDIO_TRACK_NUMBER = 1 ]] ; then
+    AUDIO_TRACK="-aid 0"
+fi
+if [[ $AUDIO_TRACK_NUMBER = 2 ]] ; then
+    AUDIO_TRACK="-aid 127"
+fi
+if [[ $AUDIO_TRACK_NUMBER = 3 ]] ; then
+    AUDIO_TRACK="-aid 128"
+fi
+if [[ $AUDIO_TRACK_NUMBER = 4 ]] ; then
+    AUDIO_TRACK="-aid 129"
+fi
+if [[ $AUDIO_TRACK_NUMBER = 5 ]] ; then
+    AUDIO_TRACK="-aid 130"
+fi
+if [[ $AUDIO_TRACK_NUMBER = 6 ]] ; then
+    AUDIO_TRACK="-aid 131"
+fi
+if [[ $AUDIO_TRACK_NUMBER = 7 ]] ; then
+    AUDIO_TRACK="-aid 132"
+fi
+if [[ $AUDIO_TRACK_NUMBER = 8 ]] ; then
+    AUDIO_TRACK="-aid 160"
+fi
+###### custom
+if [[ $AUDIO_TRACK_NUMBER = 9 ]] ; then
+    echo -n "Please enter a custom audio track:  "
+    echo -n "...like this: '-aid 128'..."
+    read CUSTOM_AUDIO_TRACK
+    AUDIO_TRACK=$CUSTOM_AUDIO_TRACK
+fi
+####################### Custom audio track language
+echo -n "Select an audio track language:
+
+(1)  Chinese - zh
+(2)  Dansk (Danish) - da
+(3)  Deutsch - de
+(4)  English - en
+(5)  Español - es
+(6)  Français - fr
+(7)  Greek - el
+(8)  Italiano (Italian) - it
+(9)  Japanese - ja
+(10) Korean - ko
+(11) Nederlands - nl
+(12) Polish - pl
+(13) Portugues - pt
+(14) Russian - ru
+
+Or input your own (like this: 'en')...
+
+Press 'Enter' for default (default is 'null', which is DVD default)...
+
+"
+read AUDIO_LANGUAGE_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $AUDIO_LANGUAGE_NUMBER ]] ; then
+    # If no file passed, default to null
+    AUDIO_LANGUAGE=
+fi
+###### preset
+if [[ $AUDIO_LANGUAGE_NUMBER = 1 ]] ; then
+    AUDIO_LANGUAGE="-alang zh"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 2 ]] ; then
+    AUDIO_LANGUAGE="-alang da"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 3 ]] ; then
+    AUDIO_LANGUAGE="-alang de"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 4 ]] ; then
+    AUDIO_LANGUAGE="-alang en"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 5 ]] ; then
+    AUDIO_LANGUAGE="-alang es"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 6 ]] ; then
+    AUDIO_LANGUAGE="-alang fr"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 7 ]] ; then
+    AUDIO_LANGUAGE="-alang el"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 8 ]] ; then
+    AUDIO_LANGUAGE="-alang it"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 9 ]] ; then
+    AUDIO_LANGUAGE="-alang ja"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 10 ]] ; then
+    AUDIO_LANGUAGE="-alang ko"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 11 ]] ; then
+    AUDIO_LANGUAGE="-alang nl"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 12 ]] ; then
+    AUDIO_LANGUAGE="-alang pl"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 13 ]] ; then
+    AUDIO_LANGUAGE="-alang pt"
+fi
+if [[ $AUDIO_LANGUAGE_NUMBER = 14 ]] ; then
+    AUDIO_LANGUAGE="-alang ru"
+fi
+####################### Custom audio bitrate level
+echo -n "Select an audio bitrate level:
+
+(1) 48 kbps
+(2) 64 kbps
+(3) 128 kbps
+(4) 160 kbps
+(5) 192 kbps
+(6) 224 kbps
+(7) 256 kbps
+(8) 320 kbps
+(9) custom
+
+Press 'Enter' for default (default is '3')...
+
+"
+read AUDIO_BITRATE_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $AUDIO_BITRATE_NUMBER ]] ; then
+    # If no file passed, default to 3
+    AUDIO_BITRATE=128
+fi
+###### preset
+if [[ $AUDIO_BITRATE_NUMBER = 1 ]] ; then
+    AUDIO_BITRATE=48
+fi
+if [[ $AUDIO_BITRATE_NUMBER = 2 ]] ; then
+    AUDIO_BITRATE=96
+fi
+if [[ $AUDIO_BITRATE_NUMBER = 3 ]] ; then
+    AUDIO_BITRATE=128
+fi
+if [[ $AUDIO_BITRATE_NUMBER = 4 ]] ; then
+    AUDIO_BITRATE=160
+fi
+if [[ $AUDIO_BITRATE_NUMBER = 5 ]] ; then
+    AUDIO_BITRATE=192
+fi
+if [[ $AUDIO_BITRATE_NUMBER = 6 ]] ; then
+    AUDIO_BITRATE=224
+fi
+if [[ $AUDIO_BITRATE_NUMBER = 7 ]] ; then
+    AUDIO_BITRATE=256
+fi
+if [[ $AUDIO_BITRATE_NUMBER = 8 ]] ; then
+    AUDIO_BITRATE=320
+fi
+###### custom
+if [[ $AUDIO_BITRATE_NUMBER = 9 ]] ; then
+    echo -n "Please enter a custom audio bitrate level:  "
+    echo -n "...like this: '100'..."
+    read CUSTOM_AUDIO_BITRATE
+    AUDIO_BITRATE=$CUSTOM_AUDIO_BITRATE
+fi
+####################### Custom audio bitrate type
+echo -n "Select an audio bitrate type:
+
+(1) Average Bitrate
+(2) Constant Bitrate
+(3) Variable Bitrate
+
+Press 'Enter' for default (default is '1')...
+
+"
+read AUDIO_BITRATE_TYPE_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $AUDIO_BITRATE_TYPE_NUMBER ]] ; then
+    # If no file passed, default to abr
+    AUDIO_BITRATE_TYPE=abr
+fi
+###### preset
+if [[ $AUDIO_BITRATE_TYPE_NUMBER = 1 ]] ; then
+    AUDIO_BITRATE_TYPE=abr
+fi
+if [[ $AUDIO_BITRATE_TYPE_NUMBER = 2 ]] ; then
+    AUDIO_BITRATE_TYPE=cbr
+fi
+if [[ $AUDIO_BITRATE_TYPE_NUMBER = 3 ]] ; then
+    AUDIO_BITRATE_TYPE=vbr
+fi
+####################### Custom audio volume level
+echo -n "Select an audio volume increase level (1-10):
+
+Press 'Enter' for default (default is '3')...
+
+"
+read AUDIO_VOLUME_LEVEL
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $AUDIO_VOLUME_LEVEL ]] ; then
+    # If no file passed, default to 3
+    AUDIO_VOLUME_LEVEL=3
+fi
+####################### Subtitles?
+echo -n "Do you want subtitles?:
+
+(1) No
+(2) Yes (DVD/ISO only)
+
+Press 'Enter' for default (default is '1', for no subtitles)...
+
+"
+read SUBTITLE_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $SUBTITLE_NUMBER ]] ; then
+    # If no file passed, default to null
+    SUBTITLE_TRACK=
+    SUBTITLE_LANGUAGE=
+    SUBTITLE_TYPE=
+fi
+###### preset
+if [[ $SUBTITLE_NUMBER = 1 ]] ; then
+    SUBTITLE_TRACK=
+    SUBTITLE_LANGUAGE=
+    SUBTITLE_TYPE=
+fi
+if [[ $SUBTITLE_NUMBER = 2 ]] ; then
+####################### Custom subtitle track
+echo -n "Select a subtitle track:
+
+(1) -sid 0
+(2) -sid 1
+(3) -sid 2
+(4) -sid 3
+(5) -sid 4
+(6) -sid 5
+(7) -sid 6
+(8) -sid 7
+(9) custom
+
+Press 'Enter' for default (default is 'null')...
+
+"
+read SUBTITLE_TRACK_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $SUBTITLE_TRACK_NUMBER ]] ; then
+    # If no file passed, default to null
+    SUBTITLE_TRACK=
+fi
+###### preset
+if [[ $SUBTITLE_TRACK_NUMBER = 1 ]] ; then
+    SUBTITLE_TRACK="-sid 0"
+fi
+if [[ $SUBTITLE_TRACK_NUMBER = 2 ]] ; then
+    SUBTITLE_TRACK="-sid 1"
+fi
+if [[ $SUBTITLE_TRACK_NUMBER = 3 ]] ; then
+    SUBTITLE_TRACK="-sid 2"
+fi
+if [[ $SUBTITLE_TRACK_NUMBER = 4 ]] ; then
+    SUBTITLE_TRACK="-sid 3"
+fi
+if [[ $SUBTITLE_TRACK_NUMBER = 5 ]] ; then
+    SUBTITLE_TRACK="-sid 4"
+fi
+if [[ $SUBTITLE_TRACK_NUMBER = 6 ]] ; then
+    SUBTITLE_TRACK="-sid 5"
+fi
+if [[ $SUBTITLE_TRACK_NUMBER = 7 ]] ; then
+    SUBTITLE_TRACK="-sid 6"
+fi
+if [[ $SUBTITLE_TRACK_NUMBER = 8 ]] ; then
+    SUBTITLE_TRACK="-sid 7"
+fi
+###### custom
+if [[ $SUBTITLE_TRACK_NUMBER = 9 ]] ; then
+    echo -n "Please enter a custom subtitles track:  "
+    echo -n "...like this: '-sid 10'..."
+    read CUSTOM_SUBTITLE_TRACK
+    SUBTITLE_TRACK=$CUSTOM_SUBTITLE_TRACK
+fi
+####################### Custom subtitles track language
+echo -n "Select a subtitles track language:
+
+(1)  Chinese - zh
+(2)  Dansk (Danish) - da
+(3)  Deutsch - de
+(4)  English - en
+(5)  Español - es
+(6)  Français - fr
+(7)  Greek - el
+(8)  Italiano (Italian) - it
+(9)  Japanese - ja
+(10) Korean - ko
+(11) Nederlands - nl
+(12) Polish - pl
+(13) Portugues - pt
+(14) Russian - ru
+
+Or input your own (like this: 'en')...
+
+Press 'Enter' for default (default is 'null')...
+
+"
+read SUBTITLE_LANGUAGE_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $SUBTITLE_LANGUAGE_NUMBER ]] ; then
+    # If no file passed, default to null
+    SUBTITLE_LANGUAGE=
+fi
+###### preset
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 1 ]] ; then
+    SUBTITLE_LANGUAGE="-slang zh"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 2 ]] ; then
+    SUBTITLE_LANGUAGE="-slang da"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 3 ]] ; then
+    SUBTITLE_LANGUAGE="-slang de"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 4 ]] ; then
+    SUBTITLE_LANGUAGE="-slang en"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 5 ]] ; then
+    SUBTITLE_LANGUAGE="-slang es"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 6 ]] ; then
+    SUBTITLE_LANGUAGE="-slang fr"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 7 ]] ; then
+    SUBTITLE_LANGUAGE="-slang el"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 8 ]] ; then
+    SUBTITLE_LANGUAGE="-slang it"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 9 ]] ; then
+    SUBTITLE_LANGUAGE="-slang ja"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 10 ]] ; then
+    SUBTITLE_LANGUAGE="-slang ko"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 11 ]] ; then
+    SUBTITLE_LANGUAGE="-slang nl"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 12 ]] ; then
+    SUBTITLE_LANGUAGE="-slang pl"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 13 ]] ; then
+    SUBTITLE_LANGUAGE="-slang pt"
+fi
+if [[ $SUBTITLE_LANGUAGE_NUMBER = 14 ]] ; then
+    SUBTITLE_LANGUAGE="-slang ru"
+fi
+####################### Subtitle Kind?
+echo -n "What kind of subtitles do you prefer?:
+
+(1)  Embed onto the video
+(2)  Embed into a separate file
+
+Press 'Enter' for default (default is '1')...
+
+"
+read SUBTITLE_TYPE_NUMBER
+###### extra blank space
+echo "
+"
+###### default
+if [[ -z $SUBTITLE_TYPE_NUMBER ]] ; then
+    # If no file passed, default to null
+    SUBTITLE_TYPE=
+fi
+###### preset
+if [[ $SUBTITLE_TYPE_NUMBER = 1 ]] ; then
+    SUBTITLE_TYPE=
+fi
+if [[ $SUBTITLE_TYPE_NUMBER = 2 ]] ; then
+    SUBTITLE_TYPE="-vobsubout ${OUTPUT_FILE}"
+fi
+###### closes the preset of 'yes' for subtitles
+fi
+####################### Custom conversion is starting
+###### extra blank space
+echo "
+"
+###### custom conversion is starting message
+read -sn 1 -p "Your custom conversion is about to begin, press any key to continue..."
+####################### Custom conversions (very high quality settings)
+###### custom preset ######
+###### H.264
+if [[ $MPEG4_TYPE = 1 ]] ; then
+# actual two-pass conversion
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -nosound -ovc x264 -x264encopts pass=1:subq=1:partitions=all:8x8dct:me=umh:frameref=1:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=$BITRATE -vf pp=de,pullup,softskip,harddup,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -oac mp3lame -lameopts $AUDIO_BITRATE_TYPE:br=$AUDIO_BITRATE:vol=$AUDIO_VOLUME_LEVEL -ovc x264 -x264encopts pass=2:subq=6:partitions=all:8x8dct:me=umh:frameref=5:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=$BITRATE -vf pp=de,pullup,softskip,harddup,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $MPEG4_TYPE = 2 ]] ; then
+# actual one-pass conversion
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -oac mp3lame -lameopts $AUDIO_BITRATE_TYPE:br=$AUDIO_BITRATE:vol=$AUDIO_VOLUME_LEVEL -ovc x264 -x264encopts subq=6:partitions=all:8x8dct:me=umh:frameref=5:bframes=3:b_pyramid=normal:weight_b:threads=auto:bitrate=$BITRATE -vf pp=de,pullup,softskip,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+###### MPEG4
+if [[ $MPEG4_TYPE = 3 ]] ; then
+# actual two-pass conversion
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -nosound -ovc lavc $CUSTOM_DIVX -lavcopts vpass=1:vcodec=mpeg4:mbd=2:trell:v4mv:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:cmp=3:subcmp=3:precmp=0:vqcomp=0.6:turbo:threads=$CPUS:vbitrate=$BITRATE -vf pp=de,pullup,softskip,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -oac mp3lame -lameopts $AUDIO_BITRATE_TYPE:br=$AUDIO_BITRATE:vol=$AUDIO_VOLUME_LEVEL -ovc lavc $CUSTOM_DIVX -lavcopts vpass=2:vcodec=mpeg4:mbd=2:mv0:trell:v4mv:cbp:last_pred=3:predia=2:dia=2:vmax_b_frames=2:vb_strategy=1:precmp=2:cmp=2:subcmp=2:preme=2:qns=2:threads=$CPUS:vbitrate=$BITRATE -vf pp=de,pullup,softskip,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $MPEG4_TYPE = 4 ]] ; then
+# actual one-pass conversion
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -oac mp3lame -lameopts $AUDIO_BITRATE_TYPE:br=$AUDIO_BITRATE:vol=$AUDIO_VOLUME_LEVEL -ovc lavc $CUSTOM_DIVX -lavcopts vcodec=mpeg4:mbd=2:mv0:trell:v4mv:cbp:last_pred=3:predia=2:dia=2:vmax_b_frames=2:vb_strategy=1:precmp=2:cmp=2:subcmp=2:preme=2:qns=2:threads=$CPUS:vbitrate=$BITRATE -vf pp=de,pullup,softskip,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+###### XVID
+if [[ $MPEG4_TYPE = 5 ]] ; then
+# actual two-pass conversion
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -nosound -ovc xvid -xvidencopts pass=1:chroma_opt:vhq=1:bvhq=1:quant_type=mpeg:threads=$CPUS:bitrate=$BITRATE -vf pp=de,pullup,softskip,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o '/dev/null'
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -oac mp3lame -lameopts $AUDIO_BITRATE_TYPE:br=$AUDIO_BITRATE:vol=$AUDIO_VOLUME_LEVEL -ovc xvid -xvidencopts pass=2:chroma_opt:vhq=4:bvhq=1:quant_type=mpeg:threads=$CPUS:bitrate=$BITRATE -vf pp=de,pullup,softskip,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+if [[ $MPEG4_TYPE = 6 ]] ; then
+# actual one-pass conversion
+mencoder $INPUT_FILE $AUDIO_TRACK $AUDIO_LANGUAGE $SUBTITLE_TRACK $SUBTITLE_LANGUAGE $SUBTITLE_TYPE -oac mp3lame -lameopts $AUDIO_BITRATE_TYPE:br=$AUDIO_BITRATE:vol=$AUDIO_VOLUME_LEVEL -ovc xvid -xvidencopts chroma_opt:vhq=4:bvhq=1:quant_type=mpeg:threads=$CPUS:bitrate=$BITRATE -vf pp=de,pullup,softskip,crop=${CROP_VALUES},$SCALING $FRAME_RATE -o $OUTPUT_FILE.avi
+fi
+####################### Close the custom quality option #17
+fi
+####################### Cleanup
+if [ -f mplayer.tmp ];then
+	rm mplayer.tmp
+fi
+if [ -f divx2pass.log ];then
+	rm divx2pass.log
+fi
+####################### Conversion finished notifications
+###### extra blank spaces
+echo "
+"
+###### notifications
+notify-send -t 7000 -i /usr/share/icons/gnome/32x32/status/info.png "Conversion Finished" ; espeak "Conversion Finished"
+# extra blank spaces
+echo "
+"
+read -sn 1 -p "Your conversion has finished, press any key to continue and close this terminal session..."
+}
+
+#################################################
+# 23 VIDEO2DVD                                  #
+#################################################
+#                                               #
+function video2dvd()
+{
+# video2dvd - Make a DVD ISO from a video file
+#             Burn ISO after script runs
+# Author    - Inameiname
+# Version:	- 1.0
+# Usage     - video2dvd $1
+# Run this script either from the terminal or by right clicking the video file and selecting the script
+# Ensure 'export VIDEO_FORMAT=NTSC' is in '~/.bashrc' or '~/.bash.profile' OR that its below
+##########
+# See if the Nautilus environment variable is empty
+if [ -z $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS ]; then
+    # If it's blank, set it equal to $1
+    NAUTILUS_SCRIPT_SELECTED_FILE_PATHS=$1
+fi
+# Loop through the list (from either Nautilus or the command line)
+for ARCHIVE_FULLPATH in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS; do
+    NEWDIRNAME=${ARCHIVE_FULLPATH%.*}
+    FILENAME=${ARCHIVE_FULLPATH##*/}
+    NAME=${ARCHIVE_FULLPATH##*/.*}
+    ###### open and run all of the following in a terminal window
+    tty -s; if [ $? -ne 0 ]; then gnome-terminal -e "$0"; exit; fi
+    ###### be sure there is a "VIDEO_FORMAT=" specified
+    export VIDEO_FORMAT=NTSC
+    ###### cd to the video file's folder
+    mkdir "$NEWDIRNAME"
+    cd "$NEWDIRNAME"
+    cd ..
+    rmdir "$NEWDIRNAME"
+    ###### check to see if the file is an mpg/vob file; if not, convert it and rename the mpeg file to "dvd_movie.mpg"
+    echo 'Is this video file not already a DVD-compliant MPEG file (MPEG/mpeg/MPG/mpg/VOB/vob), 1 for true 0 for false? '
+    read MEDIA_TYPE
+    if [ "$MEDIA_TYPE" -eq 1 ] ; then
+        ###### convert the video file to '.mpg'
+        ffmpeg -i "$ARCHIVE_FULLPATH" -target ntsc-dvd -acodec mp2 -ab 224 -sameq "$NEWDIRNAME".mpg
+        notify-send -t 5000 -i /usr/share/icons/gnome/32x32/status/info.png "Conversion to an MPEG File Finished"
+        ###### rename the '.mpg' file to "dvd_movie.mpg"
+        mv -fv "$NEWDIRNAME".mpg "dvd_movie.mpg"
+    else
+        ###### rename the mpg/mpeg/vob file to "dvd_movie.mpg"
+        mv -fv "$ARCHIVE_FULLPATH" "dvd_movie.mpg"
+    fi
+    ###### create a "dvdauthor.xml" file - (save in the same directory as movie file)
+    cat > "dvdauthor.xml" <<"End-of-message"
+    <dvdauthor dest="DVD">
+      <vmgm />
+       <titleset>
+         <titles>
+           <pgc>
+             <vob file="dvd_movie.mpg" chapters="0,05:00,10:00,15:00,20:00,25:00,30:00,35:00,40:00,45:00,50:00,55:00,1:00:00,1:05:00,1:10:00,1:15:00,1:20:00,1:25:00,1:30:00,1:35:00,1:40:00,1:45:00,1:50:00,1:55:00,2:00:00,2:05:00,2:10:00,2:15:00,2:20:00,2:25:00,2:30:00,2:35:00,2:40:00,2:45:00,2:50:00,2:55:00,3:00:00,3:05:00,3:10:00,3:15:00,3:20:00,3:25:00,3:30:00,3:35:00,3:40:00,3:45:00,3:50:00,3:55:00,4:00:00,4:05:00,4:10:00,4:15:00,4:20:00,4:25:00,4:30:00,4:35:00,4:40:00,4:45:00,4:50:00,4:55:00,5:00:00,5:05:00,5:10:00,5:15:00,5:20:00,5:25:00,5:30:00,5:35:00,5:40:00,5:45:00,5:50:00,5:55:00,6:00:00"/>
+           </pgc>
+          </titles>
+       </titleset>
+     </dvdauthor>
+End-of-message
+    ###### the actual mpg/mpeg/vob conversion to dvd-compliant folders
+    dvdauthor -x dvdauthor.xml
+    ###### rename the mpg/mpeg/vob file from "dvd_movie.mpg" back to the original
+    if [ "$MEDIA_TYPE" -eq 1 ] ; then
+        ###### rename the '.mpg' file to "dvd_movie.mpg"
+        mv -fv "dvd_movie.mpg" "$NEWDIRNAME".mpg
+    else
+        ###### rename the mpg/mpeg/vob file to "dvd_movie.mpg"
+        mv -fv "dvd_movie.mpg" "$ARCHIVE_FULLPATH"
+    fi
+    ###### rename the 'DVD' file to same name as the original
+    mv -fv "DVD" "$NEWDIRNAME"
+    ###### remove the "dvdauthor.xml" file created and used from this script
+    rm -fv -R dvdauthor.xml
+    ###### convert the dvd-compliant folders to an ISO
+    echo 'Would you like to create an ISO from the DVD-complaint folders now, 1 for true 0 for false? '
+    read boole
+    if [ $boole -eq 1 ]; then
+        cd "$NEWDIRNAME"
+        mkisofs -v -dvd-video -o "$NEWDIRNAME.iso" .
+        cd ..
+        notify-send -t 2000 -i /usr/share/icons/gnome/32x32/status/info.png "ISO created"
+    else
+        notify-send -t 2000 -i /usr/share/icons/gnome/32x32/status/info.png "no ISO created"
+    fi
+    ###### option to burn the ISO
+    echo 'Would you like to burn this disc now, 1 for true 0 for false? '
+    read boole1
+    if [ $boole1 -eq 1 ]; then
+        # to get desired device
+        df -h -x tmpfs -x usbfs
+        echo -n "Please enter the appropriate DVD drive:
+
+        (1) /dev/dvd
+        (2) /dev/sr0
+        (3) /dev/sr1
+        (4) /dev/sr2
+        (5) custom
+
+        Press 'Enter' for default (default is '1')...
+
+        "
+        read DEVICE_NUMBER
+        # extra blank space
+        echo "
+        "
+        # default
+        if [[ -z $DEVICE_NUMBER ]] ; then
+        # If no device passed, default to /dev/dvd
+            DEVICE=/dev/dvd
+        fi
+        # preset
+        if [[ $DEVICE_NUMBER = 1 ]] ; then
+            DEVICE=/dev/dvd
+        fi
+        if [[ $DEVICE_NUMBER = 2 ]] ; then
+            DEVICE=/dev/sr0
+        fi
+        if [[ $DEVICE_NUMBER = 3 ]] ; then
+            DEVICE=/dev/sr1
+        fi
+        if [[ $DEVICE_NUMBER = 4 ]] ; then
+            DEVICE=/dev/sr2
+        fi
+        # custom
+        if [[ $DEVICE_NUMBER = 5 ]] ; then
+            echo -n "Please enter the appropriate DVD drive:  "
+            echo -n "...like this: '/dev/dvd'..."
+            read CUSTOM_DEVICE
+            DEVICE=$CUSTOM_DEVICE
+        fi
+        growisofs -dvd-compat -speed=1 -Z "$DEVICE"="$NEWDIRNAME"
+        notify-send -t 2000 -i /usr/share/icons/gnome/32x32/status/info.png "DVD burned"
+    else
+        notify-send -t 2000 -i /usr/share/icons/gnome/32x32/status/info.png "no DVD burned"
+    fi
+    ###### notify-send notification showing when the job has finished
+    notify-send -t 5000 -i /usr/share/icons/gnome/32x32/status/info.png "All Conversions Finished"
+done
+}
+
+#
+##################################################################
+#                            TV                                  #
+##################################################################
+#
+##################################################
+# .. ANALOG TV to AVI: #Alias atvrip='atv2avi'   #
+##################################################
+#                                                #
+function atv2avi()
+{
+# great xvid quality is "2000" (11mb/min)
+echo -n "What analog/cable tv channel would you like to convert? (1-99)?:
+"
+read achan_type
+echo -n "Please enter how long you want to record (in this format: 02:08:17):
+"
+read time_type
+echo -n "Please enter a name for the AVI file you will convert:
+"
+read file_name
+echo -n "Please enter the quality you want your recording to be (in this format: 2000):
+"
+read qual_type
+mencoder -tv driver=v4l2:device=/dev/video1:input=0:norm=ntsc:chanlist=us-cable:channel=$achan_type:alsa=1:adevice=hw.1:audiorate=48000:immediatemode=0:amode=1 tv:// -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type
+}
+
+##################################################
+# ..                      #
+##################################################
+#                                                #
+function atv2avi_w() #alias atvrip_w='atv2avi_w'##
+{
+# great xvid quality is "2000" (11mb/min) (watch the recording at the same time)
+echo -n "What analog/cable tv channel would you like to convert? (1-99)?:
+"
+read achan_type
+echo -n "Please enter how long you want to record (in this format: 02:08:17):
+"
+read time_type
+echo -n "Please enter a name for the AVI file you will convert:
+"
+read file_name
+echo -n "Please enter the quality you want your recording to be (in this format: 2000):
+"
+read qual_type
+mencoder -tv driver=v4l2:device=/dev/video1:input=0:norm=ntsc:chanlist=us-cable:channel=$achan_type:alsa=1:adevice=hw.1:audiorate=48000:immediatemode=0:amode=1 tv:// -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type & (sleep 5 && mplayer $HOME/Temp/$file_name.avi)
+}
+
+##################################################
+# .. WATCH ANALOG TV                             #
+##################################################
+#                                                #
+function atv()
+{
+echo -n "What analog/cable tv channel would you like to watch? (1-99)?:
+"
+read ANALOGSTATION
+sh -c "mplayer -tv driver=v4l2:device=/dev/video1:input=0:norm=ntsc:chanlist=us-cable:channel="$ANALOGSTATION" tv:// & sox -r 48000 -t alsa hw:1,0 -t alsa hw:0,0"
+}
+
+##################################################
+# ..                      #
+##################################################
+# 
+function atv_()
+{
+sh -c "tvtime & sox -r 48000 -t alsa hw:1,0 -t alsa hw:0,0"
+}
+
+##################################################
+# ..                      #
+##################################################
+# 
+function ATV()
+{
+sox -s -r 32000 -c 2 -t alsa hw:1,0 -s -r 32000 -c 2 -t alsa hw:0,0 &
+tvtime
+t=`pidof sox`;
+kill $t;
+}
+
+##################################################
+# ..                      #
+##################################################
+# 
+###### WATCH DIGITAL TV
+#                     #
+function dtv()
+{
+dtvchannels
+echo -n "What digital tv channel would you like to watch?:
+"
+read DIGITALSTATION
+mplayer dvb://"$DIGITALSTATION"
+}
+
+##################################################
+# ..                      #
+##################################################
+# 
+###### DIGITAL TV to AVI
+#
+function dtv2avi()    # alias dtvrip='dtv2avi'  ##
+{
+# great xvid quality is "1600" (13mb/min)
+dtvchannels
+echo -n "What digital tv channel would you like to convert?:
+"
+read dchan_type
+echo -n "Please enter how long you want to record (in this format: 02:08:17):
+"
+read time_type
+echo -n "Please enter a name for the AVI file you will convert:
+"
+read file_name
+echo -n "Please enter the quality you want your recording to be (in this format: 1600):
+"
+read qual_type
+mencoder dvb://$dchan_type -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip,scale -zoom -xy 624 -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type
+}
+
+##################################################
+# ..                      #
+##################################################
+# 
+function dtv2avi_w() # alias dtvrip_w='dtv2avi_w' ##
+{
+# great xvid quality is "1600" (13mb/min) (watch the recording at the same time)
+dtvchannels
+echo -n "What digital tv channel would you like to convert?:
+"
+read dchan_type
+echo -n "Please enter how long you want to record (in this format: 02:08:17):
+"
+read time_type
+echo -n "Please enter a name for the AVI file you will convert:
+"
+read file_name
+echo -n "Please enter the quality you want your recording to be (in this format: 1600):
+"
+read qual_type
+mencoder dvb://$dchan_type -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip,scale -zoom -xy 624 -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type & (sleep 5 && mplayer $HOME/Temp/$file_name.avi)
+}
+
+##################################################
+# ..                      #
+##################################################
+# 
+function DTV2AVI() # alias DTVRIP='DTV2AVI' #
+{
+# best quality; big file size (100mb/min), but needs strong signal
+dtvchannels
+echo -n "What digital tv channel would you like to convert?:
+"
+read dchan_type
+echo -n "Please enter how long you want to record (in this format: 02:08:17):
+"
+read time_type
+echo -n "Please enter a name for the AVI file you will convert:
+"
+read file_name
+mencoder dvb://$dchan_type -ovc copy -oac copy -o $HOME/Temp/$file_name.mpg -endpos $time_type
+}
+
+##################################################
+# ..                      #
+##################################################
+# 
+###### DIGITAL TV to YouTube-compliant AVI
+function dtv2yt()
+{
+# ok quality (YouTube) (5mb/min)
+dtvchannels
+echo -n "What digital tv channel would you like to convert?:
+"
+read DIGITALSTATION
+echo -n "Please enter a name for the AVI file you will convert:
+"
+read AVINAME
+echo -n "Please enter how long you want to record (in this format: 02:08:17):
+"
+read ENDPOSITION
+mencoder dvb://"$DIGITALSTATION" -oac mp3lame -lameopts cbr=128 -ovc lavc -lavcopts vcodec=mpeg4 -ffourcc xvid -vf scale=320:-2,expand=:240:::1 -o "$AVINAME".avi -endpos "$ENDPOSITION"
+}
+
+####### list of all of the local digital tv channels
+#function dtvchannels() {
+#cat <<EOF
+#<INSERT YOUR LOCAL DIGITAL TV STATIONS HERE>
+#EOF
+#}
+
+##################################################
+# ..                      #
+##################################################
+# 
+###### TV (recording and watching (includes those tv functions above)
+function tv()
+{
+# Creator:		Inameiname
+# Original Creator:	Jose Catre-Vandis
+# Version: 1.0
+# Last modified: 24 September 2011
+# Requirements: mencoder & zenity
+#
+# THINGS YOU WILL NEED TO DO:
+# 1. A working dvb card and/or analog tv card
+# 2. If dvb, a ~/.mplayer/channels.conf
+# - can scan dvb channels and create this by:
+#	- sudo scan /usr/share/dvb/atsc/us-ATSC-
+#	- center-frequencies-8VSB > ~/.mplayer/
+#	- channels.conf
+# 3. If analog, a channel list, and tuned in!
+# - (all channels must have no spaces!)
+# - can scan analog channels and tune in by:
+# 	- tvtime-scanner
+# 4. Determine where your tv card is located, and
+# change if need be (script set on 'video1')
+# - tvtime-configure -d /dev/video0 # if tvtime
+# - otherwise, change 'video1' to 'video0' below
+######################## SOFTWARE CHECK
+############ Check for required software...
+mencoder_bin=`which mencoder | grep -c "mencoder"`
+###### check for mencoder (also requires 'zenity')
+if [ $mencoder_bin -eq "0" ]; then
+zenity --error --title="Error - Missing Software" \
+ --text="You do not have the mencoder package installed
+Please install it in order to use this script.
+Make sure that the Multiverse repositories are enabled and
+then type: 'sudo apt-get install mencoder' at a terminal."
+exit
+fi
+######################## CHOOSE TV TYPE
+############ What type of TV TYPE do you want?
+###### you can edit these entries to suit
+title="Which TV type do you want ?"
+tv_type=`zenity  --width="480" --height="300" --title="$title" --list --radiolist --column="Click Here" \
+	--column="Channel" --column="Description" \
+	FALSE "DVB_RECORD" "Records dvb tv"\
+	FALSE "ANALOG_RECORD" "Records analog tv"\
+	FALSE "DVB_TV" "Watch dvb tv through mplayer"\
+	TRUE "ANALOG_TV" "Watch analog tv through mplayer"\
+	FALSE "ANALOG_TV1" "Watch analog tv through tvtime 1"\
+	FALSE "ANALOG_TV2" "Watch analog tv through tvtime 2"\
+	| sed 's/ max//g' `
+echo "$tv_type chosen as the channel to record."
+###### user must select a target type (Check if they cancelled)
+if [ ! "$tv_type" ]; then
+	zenity --error --title="Error" --text="You must select a TV type!"
+	exit
+fi
+######################## TV TYPES
+if [ "$tv_type" = "DVB_RECORD" ]; then
+	############ RECORD DVB TV
+	###### Which DVB TV Channel? ######
+	###### YOU NEED TO EDIT THIS SECTION FOR YOUR ENVIRONMENT
+	# just change the channel names to reflect your channels.conf file
+	# ensure there are no spaces in channel names here or in your channels.conf file
+	# can scan dvb channels and create this by:
+	# sudo scan /usr/share/dvb/atsc/us-ATSC-center-frequencies-8VSB > ~/.mplayer/channels.conf
+	title="Which DVB-T Channel do you want to record ?"
+	dchan_type=`zenity  --width="380" --height="500" --title="$title" --list --radiolist --column="Click Here" \
+		--column="Channel" --column="Description" \
+		TRUE "ABC" "" \
+		FALSE "MYTV" "" \
+		FALSE "NBC" "" \
+		FALSE "CBS" "" \
+		FALSE "CBS2" "" \
+		FALSE "FOX" "" \
+		FALSE "WOSU-HD" "" \
+		FALSE "WOSU-D1" "" \
+		FALSE "WOSU-D2" "" \
+		FALSE "ADD" "" \
+		FALSE "YOUR" "" \
+		FALSE "OWN" "" \
+		FALSE "CHANNELS" "" \
+		FALSE "HERE" "" \
+		FALSE "Custom" "Input your own channel: 'NBC'"\
+		| sed 's/ max//g' `
+	echo "$dchan_type chosen as the channel to record."
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$dchan_type" ]; then
+		zenity --error --title="Error" --text="You must select a Channel!"
+		exit
+	fi
+	###### How Long Do You Want To Record? ######
+	###### how long?
+	title="How long do you want to record for ?"
+	time_type=`zenity  --width="380" --height="500" --title="$title" --list --radiolist --column="Click Here" \
+		--column="Record Time" --column="Description" \
+		TRUE "00:00:20" "20 seconds for testing" \
+		FALSE "00:01:00" "1 minute" \
+		FALSE "00:05:00" "5 minutes" \
+		FALSE "00:10:00" "10 minutes" \
+		FALSE "00:15:00" "15 minutes" \
+		FALSE "00:30:00" "30 minutes" \
+		FALSE "00:45:00" "45 minutes" \
+		FALSE "01:00:00" "1 hour" \
+		FALSE "01:15:00" "1:15 minutes" \
+		FALSE "01:30:00" "1:30 minutes" \
+		FALSE "01:45:00" "1:45 minutes" \
+		FALSE "02:00:00" "2 hours" \
+		FALSE "02:15:00" "2:15 minutes" \
+		FALSE "02:30:00" "2:30 minutes" \
+		FALSE "02:45:00" "2:45 minutes" \
+		FALSE "03:00:00" "3 hours" \
+		FALSE "03:15:00" "3:15 minutes" \
+		FALSE "03:30:00" "3:30 minutes" \
+		FALSE "03:45:00" "3:45 minutes" \
+		FALSE "04:00:00" "4 hours" \
+		FALSE "04:15:00" "4:15 minutes" \
+		FALSE "04:30:00" "4:30 minutes" \
+		FALSE "04:45:00" "4:45 minutes" \
+		FALSE "05:00:00" "5 hours" \
+		FALSE "05:15:00" "5:15 minutes" \
+		FALSE "05:30:00" "5:30 minutes" \
+		FALSE "05:45:00" "5:45 minutes" \
+		FALSE "06:00:00" "6 hours" \
+		FALSE "06:15:00" "6:15 minutes" \
+		FALSE "06:30:00" "6:30 minutes" \
+		FALSE "06:45:00" "6:45 minutes" \
+		FALSE "07:00:00" "7 hours" \
+		FALSE "07:15:00" "7:15 minutes" \
+		FALSE "07:30:00" "7:30 minutes" \
+		FALSE "07:45:00" "7:45 minutes" \
+		FALSE "08:00:00" "8 hours" \
+		FALSE "08:15:00" "8:15 minutes" \
+		FALSE "08:30:00" "8:30 minutes" \
+		FALSE "08:45:00" "8:45 minutes" \
+		FALSE "09:00:00" "9 hours" \
+		FALSE "09:15:00" "9:15 minutes" \
+		FALSE "09:30:00" "9:30 minutes" \
+		FALSE "09:45:00" "9:45 minutes" \
+		FALSE "10:00:00" "10 hours" \
+		FALSE "10:15:00" "10:15 minutes" \
+		FALSE "10:30:00" "10:30 minutes" \
+		FALSE "10:45:00" "10:45 minutes" \
+		FALSE "11:00:00" "11 hours" \
+		FALSE "11:15:00" "11:15 minutes" \
+		FALSE "11:30:00" "11:30 minutes" \
+		FALSE "11:45:00" "11:45 minutes" \
+		FALSE "12:00:00" "12 hours" \
+		FALSE "12:15:00" "12:15 minutes" \
+		FALSE "12:30:00" "12:30 minutes" \
+		FALSE "12:45:00" "12:45 minutes" \
+		FALSE "13:00:00" "13 hours" \
+		FALSE "13:15:00" "13:15 minutes" \
+		FALSE "13:30:00" "13:30 minutes" \
+		FALSE "13:45:00" "13:45 minutes" \
+		FALSE "14:00:00" "14 hours" \
+		FALSE "14:15:00" "14:15 minutes" \
+		FALSE "14:30:00" "14:30 minutes" \
+		FALSE "14:45:00" "14:45 minutes" \
+		FALSE "15:00:00" "15 hours" \
+		FALSE "15:15:00" "15:15 minutes" \
+		FALSE "15:30:00" "15:30 minutes" \
+		FALSE "15:45:00" "15:45 minutes" \
+		FALSE "16:00:00" "16 hours" \
+		FALSE "16:15:00" "16:15 minutes" \
+		FALSE "16:30:00" "16:30 minutes" \
+		FALSE "16:45:00" "16:45 minutes" \
+		FALSE "17:00:00" "17 hours" \
+		FALSE "17:15:00" "17:15 minutes" \
+		FALSE "17:30:00" "17:30 minutes" \
+		FALSE "17:45:00" "17:45 minutes" \
+		FALSE "18:00:00" "18 hours" \
+		FALSE "18:15:00" "18:15 minutes" \
+		FALSE "18:30:00" "18:30 minutes" \
+		FALSE "18:45:00" "18:45 minutes" \
+		FALSE "19:00:00" "19 hours" \
+		FALSE "19:15:00" "19:15 minutes" \
+		FALSE "19:30:00" "19:30 minutes" \
+		FALSE "19:45:00" "19:45 minutes" \
+		FALSE "20:00:00" "20 hours" \
+		FALSE "20:15:00" "20:15 minutes" \
+		FALSE "20:30:00" "20:30 minutes" \
+		FALSE "20:45:00" "20:45 minutes" \
+		FALSE "21:00:00" "21 hours" \
+		FALSE "21:15:00" "21:15 minutes" \
+		FALSE "21:30:00" "21:30 minutes" \
+		FALSE "21:45:00" "21:45 minutes" \
+		FALSE "22:00:00" "22 hours" \
+		FALSE "22:15:00" "22:15 minutes" \
+		FALSE "22:30:00" "22:30 minutes" \
+		FALSE "22:45:00" "22:45 minutes" \
+		FALSE "23:00:00" "23 hours" \
+		FALSE "23:15:00" "23:15 minutes" \
+		FALSE "23:30:00" "23:30 minutes" \
+		FALSE "23:45:00" "23:45 minutes" \
+		FALSE "24:00:00" "24 hours" \
+		| sed 's/ max//g' `
+	echo "$time_type chosen as the record time."
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$time_type" ]; then
+		zenity --error --title="Error" --text="You must select a Time!"
+		exit
+	fi
+	###### Choose a Filename? ######
+	###### user must enter a filename
+	title="Please enter a filename for your recording, no spaces"
+	file_name=`zenity  --width="480" --height="150" --title="$title" --entry`
+	echo "$file_name entered as the file name."
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$file_name" ]; then
+		zenity --error --title="Error" --text="You must enter a Filename!"
+		exit
+	fi
+	###### Select the Quality of Your Recording? ######
+	###### quality?
+	title="What quality do you want to record at ?"
+	qual_type=`zenity  --width="380" --height="380" --title="$title" --list --radiolist --column="Click Here" \
+		--column="Record Quality" --column="Description" \
+		FALSE "500" "Passable Quality"\
+		FALSE "900" "OK Quality"\
+		FALSE "1100" "VHS Quality"\
+		FALSE "1300" "SVHS Quality"\
+		FALSE "1500" "VCD Quality"\
+		TRUE "1600" "MY Quality"\
+		FALSE "1800" "SVCD Quality" \
+		FALSE "2000" "Very Good Quality"\
+		FALSE "2500" "High Quality" \
+		FALSE "3000" "Excellent Quality"\
+		FALSE "MPEG-TS" "Raw dvb in ts format"\
+		| sed 's/ max//g' `
+	echo "$qual_type chosen as the encoding quality."
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$qual_type" ]; then
+		zenity --error --title="Error" --text="You must select an encoding quality!"
+		exit
+	fi
+	###### Start Time, Now or a Set Time Later? ######
+	###### date-time timer
+	# enter required time:
+	title="Please enter a start time..."
+	starttime=`zenity  --width="480" --height="150" --title="$title" --entry --entry-text="now" --text="Enter Start Time in 00:00 format
+	or click 'OK' for immediate start"`
+	echo "$starttime entered as the start time."
+	curtime=$(date --utc --date now +%s)
+	echo "$curtime entered as the current time."
+	righttime=$(date --utc --date $starttime +%s)
+	echo "$righttime entered as the start time."
+	# this bit copes with the starting time for the encode
+	# beginning after midnight the following day
+	if (($righttime<$curtime)); then
+	     newtime=$(($righttime+86400))
+	else
+	     newtime=$righttime
+	fi
+	waittime=$(($newtime - $curtime))
+	echo "$waittime entered as time to wait before encoding starts"
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$newtime" ]; then
+		zenity --error --title="Error" --text="You must enter a Start Time!"
+		exit
+	fi
+	echo Channel= $dchan_type
+	echo Filename= $file_name
+	echo Encode length= $time_type
+	echo Quality of encode= $qual_type
+	sleep $waittime
+	###### The Actual DVB Video Encoding? ######
+	###### video encoding DVB
+	# YOU NEED TO EDIT THIS SECTION FOR YOUR ENVIRONMENT
+	if [ "$qual_type" = "MPEG-TS" ]; then
+		mencoder dvb://$dchan_type -ovc copy -oac copy -o $HOME/Temp/$file_name.mpg -endpos $time_type | zenity --progress --percentage=0 --title="DVB Recording Script" --text="Processing Video...
+		$file_name"
+	elif [ "$dchan_type" = "Custom" ]; then
+		# custom channel
+		custom_dchannel="Please enter custom digital channel, no spaces"
+		dchan_type_custom=`zenity  --width="480" --height="150" --title="$custom_dchannel" --entry`
+		echo "$dchan_type_custom entered as the dvb channel."
+		mencoder dvb://$dchan_type_custom -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip,scale -zoom -xy 624 -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type | zenity --progress --percentage=0 --title="DVB Recording Script" --text="Processing Video...
+		$file_name"
+	else
+		mencoder dvb://$dchan_type -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip,scale -zoom -xy 624 -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type | zenity --progress --percentage=0 --title="DVB Recording Script" --text="Processing Video...
+		$file_name"
+	fi
+elif [ "$tv_type" = "ANALOG_RECORD" ]; then
+	############ RECORD ANALOG TV
+	###### Which Analog TV Channel? ######
+	###### YOU NEED TO EDIT THIS SECTION FOR YOUR ENVIRONMENT
+	# just change the channel names to reflect your analog channels list
+	# you need to keep the "31-BBC1" style and format, if applicable.
+	# this is "channelnumber-channelname"
+	# can scan analog channels and tune in by (at least with tvtime):
+	# tvtime-scanner
+	title="Which Analog Channel do you want to record ?"
+	achan_type=`zenity  --width="380" --height="500" --title="$title" --list --radiolist --column="Click Here" \
+		--column="Channel" --column="Description" \
+		TRUE "Composite" "Records from Composite Input" \
+		FALSE "SVIDEO" "Records from S-Video Input" \
+		FALSE "1" ""\
+		FALSE "2" ""\
+		FALSE "3" ""\
+		FALSE "4" ""\
+		FALSE "5" ""\
+		FALSE "6" ""\
+		FALSE "7" ""\
+		FALSE "8" ""\
+		FALSE "9" ""\
+		FALSE "10" ""\
+		FALSE "11" ""\
+		FALSE "12" ""\
+		FALSE "13" ""\
+		FALSE "14" ""\
+		FALSE "15" ""\
+		FALSE "16" ""\
+		FALSE "17" ""\
+		FALSE "18" ""\
+		FALSE "19" ""\
+		FALSE "20" ""\
+		FALSE "21" ""\
+		FALSE "22" ""\
+		FALSE "23" ""\
+		FALSE "24" ""\
+		FALSE "25" ""\
+		FALSE "26" ""\
+		FALSE "27" ""\
+		FALSE "28" ""\
+		FALSE "29" ""\
+		FALSE "30" ""\
+		FALSE "31" ""\
+		FALSE "32" ""\
+		FALSE "33" ""\
+		FALSE "34" ""\
+		FALSE "35" ""\
+		FALSE "36" ""\
+		FALSE "37" ""\
+		FALSE "38" ""\
+		FALSE "39" ""\
+		FALSE "40" ""\
+		FALSE "41" ""\
+		FALSE "42" ""\
+		FALSE "43" ""\
+		FALSE "44" ""\
+		FALSE "45" ""\
+		FALSE "46" ""\
+		FALSE "47" ""\
+		FALSE "48" ""\
+		FALSE "49" ""\
+		FALSE "50" ""\
+		FALSE "51" ""\
+		FALSE "52" ""\
+		FALSE "53" ""\
+		FALSE "54" ""\
+		FALSE "55" ""\
+		FALSE "56" ""\
+		FALSE "57" ""\
+		FALSE "58" ""\
+		FALSE "59" ""\
+		FALSE "60" ""\
+		FALSE "61" ""\
+		FALSE "62" ""\
+		FALSE "63" ""\
+		FALSE "64" ""\
+		FALSE "65" ""\
+		FALSE "66" ""\
+		FALSE "67" ""\
+		FALSE "68" ""\
+		FALSE "69" ""\
+		FALSE "70" ""\
+		FALSE "71" ""\
+		FALSE "72" ""\
+		FALSE "73" ""\
+		FALSE "74" ""\
+		FALSE "75" ""\
+		FALSE "76" ""\
+		FALSE "77" ""\
+		FALSE "78" ""\
+		FALSE "79" ""\
+		FALSE "80" ""\
+		FALSE "81" ""\
+		FALSE "82" ""\
+		FALSE "83" ""\
+		FALSE "84" ""\
+		FALSE "85" ""\
+		FALSE "86" ""\
+		FALSE "87" ""\
+		FALSE "88" ""\
+		FALSE "89" ""\
+		FALSE "90" ""\
+		FALSE "91" ""\
+		FALSE "92" ""\
+		FALSE "93" ""\
+		FALSE "94" ""\
+		FALSE "95" ""\
+		FALSE "96" ""\
+		FALSE "97" ""\
+		FALSE "98" ""\
+		FALSE "99" ""\
+		FALSE "100" ""\
+		FALSE "101" ""\
+		FALSE "102" ""\
+		FALSE "103" ""\
+		FALSE "104" ""\
+		FALSE "105" ""\
+		FALSE "106" ""\
+		FALSE "107" ""\
+		FALSE "108" ""\
+		FALSE "109" ""\
+		FALSE "110" ""\
+		FALSE "111" ""\
+		FALSE "112" ""\
+		FALSE "113" ""\
+		FALSE "114" ""\
+		FALSE "115" ""\
+		FALSE "116" ""\
+		FALSE "117" ""\
+		FALSE "118" ""\
+		FALSE "119" ""\
+		FALSE "120" ""\
+		FALSE "121" ""\
+		FALSE "122" ""\
+		FALSE "123" ""\
+		FALSE "124" ""\
+		FALSE "125" ""\
+		FALSE "Custom" "Input your own channel: '234'"\
+		| sed 's/ max//g' `
+	echo "$achan_type chosen as the channel to record."
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$achan_type" ]; then
+		zenity --error --title="Error" --text="You must select a Channel!"
+		exit
+	fi
+	###### How Long Do You Want To Record? ######
+	###### how long?
+	title="How long do you want to record for ?"
+	time_type=`zenity  --width="380" --height="500" --title="$title" --list --radiolist --column="Click Here" \
+		--column="Record Time" --column="Description" \
+		TRUE "00:00:20" "20 seconds for testing" \
+		FALSE "00:01:00" "1 minute" \
+		FALSE "00:05:00" "5 minutes" \
+		FALSE "00:10:00" "10 minutes" \
+		FALSE "00:15:00" "15 minutes" \
+		FALSE "00:30:00" "30 minutes" \
+		FALSE "00:45:00" "45 minutes" \
+		FALSE "01:00:00" "1 hour" \
+		FALSE "01:15:00" "1:15 minutes" \
+		FALSE "01:30:00" "1:30 minutes" \
+		FALSE "01:45:00" "1:45 minutes" \
+		FALSE "02:00:00" "2 hours" \
+		FALSE "02:15:00" "2:15 minutes" \
+		FALSE "02:30:00" "2:30 minutes" \
+		FALSE "02:45:00" "2:45 minutes" \
+		FALSE "03:00:00" "3 hours" \
+		FALSE "03:15:00" "3:15 minutes" \
+		FALSE "03:30:00" "3:30 minutes" \
+		FALSE "03:45:00" "3:45 minutes" \
+		FALSE "04:00:00" "4 hours" \
+		FALSE "04:15:00" "4:15 minutes" \
+		FALSE "04:30:00" "4:30 minutes" \
+		FALSE "04:45:00" "4:45 minutes" \
+		FALSE "05:00:00" "5 hours" \
+		FALSE "05:15:00" "5:15 minutes" \
+		FALSE "05:30:00" "5:30 minutes" \
+		FALSE "05:45:00" "5:45 minutes" \
+		FALSE "06:00:00" "6 hours" \
+		FALSE "06:15:00" "6:15 minutes" \
+		FALSE "06:30:00" "6:30 minutes" \
+		FALSE "06:45:00" "6:45 minutes" \
+		FALSE "07:00:00" "7 hours" \
+		FALSE "07:15:00" "7:15 minutes" \
+		FALSE "07:30:00" "7:30 minutes" \
+		FALSE "07:45:00" "7:45 minutes" \
+		FALSE "08:00:00" "8 hours" \
+		FALSE "08:15:00" "8:15 minutes" \
+		FALSE "08:30:00" "8:30 minutes" \
+		FALSE "08:45:00" "8:45 minutes" \
+		FALSE "09:00:00" "9 hours" \
+		FALSE "09:15:00" "9:15 minutes" \
+		FALSE "09:30:00" "9:30 minutes" \
+		FALSE "09:45:00" "9:45 minutes" \
+		FALSE "10:00:00" "10 hours" \
+		FALSE "10:15:00" "10:15 minutes" \
+		FALSE "10:30:00" "10:30 minutes" \
+		FALSE "10:45:00" "10:45 minutes" \
+		FALSE "11:00:00" "11 hours" \
+		FALSE "11:15:00" "11:15 minutes" \
+		FALSE "11:30:00" "11:30 minutes" \
+		FALSE "11:45:00" "11:45 minutes" \
+		FALSE "12:00:00" "12 hours" \
+		FALSE "12:15:00" "12:15 minutes" \
+		FALSE "12:30:00" "12:30 minutes" \
+		FALSE "12:45:00" "12:45 minutes" \
+		FALSE "13:00:00" "13 hours" \
+		FALSE "13:15:00" "13:15 minutes" \
+		FALSE "13:30:00" "13:30 minutes" \
+		FALSE "13:45:00" "13:45 minutes" \
+		FALSE "14:00:00" "14 hours" \
+		FALSE "14:15:00" "14:15 minutes" \
+		FALSE "14:30:00" "14:30 minutes" \
+		FALSE "14:45:00" "14:45 minutes" \
+		FALSE "15:00:00" "15 hours" \
+		FALSE "15:15:00" "15:15 minutes" \
+		FALSE "15:30:00" "15:30 minutes" \
+		FALSE "15:45:00" "15:45 minutes" \
+		FALSE "16:00:00" "16 hours" \
+		FALSE "16:15:00" "16:15 minutes" \
+		FALSE "16:30:00" "16:30 minutes" \
+		FALSE "16:45:00" "16:45 minutes" \
+		FALSE "17:00:00" "17 hours" \
+		FALSE "17:15:00" "17:15 minutes" \
+		FALSE "17:30:00" "17:30 minutes" \
+		FALSE "17:45:00" "17:45 minutes" \
+		FALSE "18:00:00" "18 hours" \
+		FALSE "18:15:00" "18:15 minutes" \
+		FALSE "18:30:00" "18:30 minutes" \
+		FALSE "18:45:00" "18:45 minutes" \
+		FALSE "19:00:00" "19 hours" \
+		FALSE "19:15:00" "19:15 minutes" \
+		FALSE "19:30:00" "19:30 minutes" \
+		FALSE "19:45:00" "19:45 minutes" \
+		FALSE "20:00:00" "20 hours" \
+		FALSE "20:15:00" "20:15 minutes" \
+		FALSE "20:30:00" "20:30 minutes" \
+		FALSE "20:45:00" "20:45 minutes" \
+		FALSE "21:00:00" "21 hours" \
+		FALSE "21:15:00" "21:15 minutes" \
+		FALSE "21:30:00" "21:30 minutes" \
+		FALSE "21:45:00" "21:45 minutes" \
+		FALSE "22:00:00" "22 hours" \
+		FALSE "22:15:00" "22:15 minutes" \
+		FALSE "22:30:00" "22:30 minutes" \
+		FALSE "22:45:00" "22:45 minutes" \
+		FALSE "23:00:00" "23 hours" \
+		FALSE "23:15:00" "23:15 minutes" \
+		FALSE "23:30:00" "23:30 minutes" \
+		FALSE "23:45:00" "23:45 minutes" \
+		FALSE "24:00:00" "24 hours" \
+		| sed 's/ max//g' `
+	echo "$time_type chosen as the record time."
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$time_type" ]; then
+		zenity --error --title="Error" --text="You must select a Time!"
+		exit
+	fi
+	###### Choose a Filename? ######
+	###### user must enter a filename
+	title="Please enter a filename for your recording, no spaces"
+	file_name=`zenity  --width="480" --height="150" --title="$title" --entry`
+	echo "$file_name entered as the file name."
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$file_name" ]; then
+		zenity --error --title="Error" --text="You must enter a Filename!"
+		exit
+	fi
+	###### Select the Quality of Your Recording? ######
+	###### quality?
+	title="What quality do you want to record at ?"
+	qual_type=`zenity  --width="380" --height="380" --title="$title" --list --radiolist --column="Click Here" \
+		--column="Record Quality" --column="Description" \
+		FALSE "500" "Passable Quality"\
+		FALSE "900" "OK Quality"\
+		FALSE "1100" "VHS Quality"\
+		FALSE "1300" "SVHS Quality"\
+		FALSE "1500" "VCD Quality"\
+		TRUE "1600" "MY Quality"\
+		FALSE "1800" "SVCD Quality" \
+		FALSE "2000" "Very Good Quality"\
+		FALSE "2500" "High Quality" \
+		FALSE "3000" "Excellent Quality"\
+		| sed 's/ max//g' `
+	echo "$qual_type chosen as the encoding quality."
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$qual_type" ]; then
+		zenity --error --title="Error" --text="You must select an encoding quality!"
+		exit
+	fi
+	###### Start Time, Now or a Set Time Later? ######
+	###### date-time timer
+	# enter required time:
+	title="Please enter a start time..."
+	starttime=`zenity  --width="480" --height="150" --title="$title" --entry --entry-text="now" --text="Enter Start Time in 00:00 format
+	or click 'OK' for immediate start"`
+	echo "$starttime entered as the start time."
+	curtime=$(date --utc --date now +%s)
+	echo "$curtime entered as the current time."
+	newtime=$(date --utc --date $starttime +%s)
+	echo "$newtime entered as the start time."
+	waittime=$(($newtime - $curtime))
+	echo "$waittime entered as time to wait before encoding starts"
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$newtime" ]; then
+		zenity --error --title="Error" --text="You must enter a Start Time!"
+		exit
+	fi
+	echo Channel= $achan_type
+	echo Filename= $file_name
+	echo Encode length= $time_type
+	echo Quality of encode= $qual_type
+	sleep $waittime
+	###### The Actual Analog Video Encoding? ######
+	###### video encoding analog
+	# YOU NEED TO EDIT THIS SECTION FOR YOUR ENVIRONMENT
+	# In the third script (after "else") just change the
+	# chanlist value from us-cable to your chanlist region
+	# AND change device (video1) to video0 or whatever if need be
+	if [ "$achan_type" = "Composite" ]; then
+		input_type=1
+		mencoder -tv driver=v4l2:device=/dev/video1:input=$input_type:norm=ntsc:alsa=1:adevice=hw.1:audiorate=48000:immediatemode=0:amode=1 tv:// -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type | zenity --progress --percentage=0 --title="COMPOSITE Recording Script" --text="Processing Video...
+		$file_name"
+	elif [ "$achan_type" = "SVIDEO" ]; then
+		input_type=2
+		mencoder -tv driver=v4l2:device=/dev/video1:input=$input_type:norm=ntsc:alsa=1:adevice=hw.1:audiorate=48000:immediatemode=0:amode=1 tv:// -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type | zenity --progress --percentage=0 --title="SVIDEO Recording Script" --text="Processing Video...
+		$file_name"
+	elif [ "$achan_type" = "Custom" ]; then
+		# custom channel
+		custom_achannel="Please enter custom analog channel, no spaces"
+		achan_type_custom=`zenity  --width="480" --height="150" --title="$custom_achannel" --entry`
+		echo "$achan_type_custom entered as the analog channel."
+		mencoder -tv driver=v4l2:device=/dev/video1:input=0:norm=ntsc:chanlist=us-cable:channel=$achan_type_custom:alsa=1:adevice=hw.1:audiorate=48000:immediatemode=0:amode=1 tv:// -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type | zenity --progress --percentage=0 --title="ANALOG TV Recording Script" --text="Processing Video...
+		$file_name"
+	else
+		mencoder -tv driver=v4l2:device=/dev/video1:input=0:norm=ntsc:chanlist=us-cable:channel=$achan_type:alsa=1:adevice=hw.1:audiorate=48000:immediatemode=0:amode=1 tv:// -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=$qual_type:vhq:v4mv:keyint=250 -vf pp=de,pullup,softskip -oac mp3lame -lameopts abr:br=128:vol=3 -ffourcc xvid -o $HOME/Temp/$file_name.avi -endpos $time_type | zenity --progress --percentage=0 --title="ANALOG TV Recording Script" --text="Processing Video...
+		$file_name"
+	fi
+elif [ "$tv_type" = "DVB_TV" ]; then
+	############ WATCH DVB TV (through MPlayer)
+	# YOU NEED TO EDIT THIS SECTION FOR YOUR ENVIRONMENT
+	# gives you list of your current dvb channels
+	dchan_type=$(zenity --entry --text="What digital tv channel would you like to watch?:
+
+	ATSC/NTSC local digital channel list:
+	ADD YOUR LIST OF DIGITAL CHANNELS HERE FOR EASY USE ")
+	mplayer dvb://$dchan_type
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$dchan_type" ]; then
+		zenity --error --title="Error" --text="You must select a Channel!"
+		exit
+	fi
+elif [ "$tv_type" = "ANALOG_TV" ]; then
+	############ WATCH Analog TV (through MPlayer)
+	achan_type=$(zenity --entry --text="What analog/cable tv channel would you like to watch?: ")
+	sh -c "mplayer -tv driver=v4l2:device=/dev/video1:input=0:norm=ntsc:chanlist=us-cable:channel=$achan_type tv:// & sox -r 48000 -t alsa hw:1,0 -t alsa hw:0,0"
+	###### user must select a target type (Check if they cancelled)
+	if [ ! "$achan_type" ]; then
+		zenity --error --title="Error" --text="You must select a Channel!"
+		exit
+	fi
+elif [ "$tv_type" = "ANALOG_TV1" ]; then
+	############ WATCH Analog TV (through TVtime 1)
+	sox -s -r 32000 -c 2 -t alsa hw:1,0 -s -r 32000 -c 2 -t alsa hw:0,0 &
+	tvtime
+	t=`pidof sox`;
+	kill $t;
+else
+	############ WATCH Analog TV (through TVtime 2)
+	sh -c "tvtime & sox -r 48000 -t alsa hw:1,0 -t alsa hw:0,0"
+fi
+exit
+}
+######################################################################
+# END OF TV DVD RECORD 
+######################################################################
+#
+##################################################
+# ..                      #
+##################################################
+# 

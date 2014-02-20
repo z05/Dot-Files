@@ -1,86 +1,297 @@
-# this is notes for video: http://www.youtube.com/watch?v=gIIalmYCqzs
+﻿##################################################
+#                System Alias                    #
+##################################################
+#                                                #
+# update
+alias Syu='sudo pacman -Syyu '
+alias pSu='sudo pacaur -Syua '
+alias ySu='yaourt -Syua '
+alias mirrors='sudo pacman-mirrors -g'
+# search
+alias Ss='sudo pacman -Ss '
+alias pSs='sudo pacaur -Ss '
+alias ySs='yaourt -Ss '
+# install
+alias S='sudo pacman -S '
+alias pS='sudo pacaur -S '
+alias yS='yaourt '
+# Remove software
+alias sR='sudo pacman -R '
+alias Rns='sudo pacman -Rns ' 
+# package lists
 
-#------------------------------------------////
-#                Sopcast
-#------------------------------------------////
+##################################################
+# .. Computer cleanup                            #
+##################################################
+#                                                #
+alias bleachbitcleanup='sudo bleachbit --clean --preset'
+#alias adobecleanup='sudo rm -fr ~/.adobe/* && sudo rm -fr ~/.macromedia/* && sudo rm -fr /root/.adobe/* && sudo rm -fr /root/.macromedia/*'
+#alias cachecleanup='sudo rm -fr /root/.cache/* && sudo rm -fr ~/.cache/*' # cleanup cache
+#alias tp='trash-put' # sends files to trash instead of perm deleting w/rm
+#alias trash='sudo rm -fr ~/.local/share/Trash/* && sudo rm -fr /root/.local/share/Trash/* && sudo rm -fr /root/.Trash && sudo rm -fr ~/.Trash'
 
-#Format=spp-category-channeltitle.language,subtitle
-sppc () { #choose a player, comment out the ones not using
-        #player='mplayer'
-#        player="mplayer -cache 1000"
-        #player='vlc'
-        #player='vlc --control=lirc'
-        (sp-sc "$1" 8901 9901 &>/dev/null &); sleep 10; wait $(mplayer http://localhost:9901); killall sp-sc;
-}
+##################################################
+# Defragmenting and Fragmentation-Checking tools #
+##################################################
+#                                                #
+#alias defrag-home='defrag ~'                # uses 'defrag' function
+#alias defrag-root='defrag /root'            # uses 'defrag' function
+#alias defrag-system='defrag /'              # uses 'defrag' function
+#alias defrag2-home='defrag2 ~'              # uses 'defrag2' function
+#alias defrag2-root='defrag2 /root'          # uses 'defrag2' function
+#alias defrag2-system='defrag2 /'            # uses 'defrag2' function
+#alias fragcheck-home='fragcheck ~'          # uses 'fragcheck' function
+#alias fragcheck-root='fragcheck /root'      # uses 'fragcheck' function
+#alias fragcheck-system='fragcheck /'        # uses 'fragcheck' function
+#lias fragcheck2-home='fragcheck2 ~'         # uses 'fragcheck2' function
+#alias fragcheck2-root='fragcheck2 /root'    # uses 'fragcheck2' function
+#alias fragcheck2-system='fragcheck2 /'      # uses 'fragcheck2' function
 
-alias spp-anime-babytv.english='sppc "sop://218.106.52.252:3912/123795"'
-alias spp-anime-boomerang.romanian='sppc "sop://broker.sopcast.com:3912/60712"'
-alias spp-anime-boomerang2.english='sppc "sop://218.106.52.252:3912/123801"'
-alias spp-anime-cartoonnetwork.romanian='sppc "sop://broker.sopcast.com:3912/80593"'
-alias spp-anime-cartoonnetwork2.romanian='sppc "sop://218.106.52.252:3912/123796"'
-alias spp-anime-davincilearning.romanian='sppc "sop://218.106.52.252:3912/123798"'
-alias spp-doc-alfa.romanian='sppc "sop://218.106.52.252:3912/122784"'
-alias spp-doc-animalplanet.english,romanian='sppc "sop://broker.sopcast.com:3912/74631"'
-alias spp-doc-discovery.english,romanian='sppc "sop://broker.sopcast.com:3912/80623"'
-alias spp-doc-discoveryinvestigation.english,romanian='sppc "sop://broker.sopcast.com:3912/74634"'
-alias spp-doc-discoveryscience.english,romanian='sppc "sop://broker.sopcast.com:3912/74635"'
-alias spp-doc-discoverytravelingliving.english,romanian='sppc "sop://broker.sopcast.com:3912/74636"'
-alias spp-doc-discoveryworld.english,romanian='sppc "sop://broker.sopcast.com:3912/74633"'
-alias spp-doc-fln.english='sppc "sop://218.106.52.252:3912/122783"'
-alias spp-doc-historychannel='sppc "sop://218.106.52.252:3912/122727"'
-alias spp-doc-nationalgeographic.english,romanian='sppc "sop://broker.sopcast.com:3912/80397"'
-alias spp-doc-nationalgeographicwild.english,romanian='sppc "sop://broker.sopcast.com:3912/80626"'
-alias spp-doc-nova.romanian='sppc "sop://218.106.52.252:3912/123604"'
-alias spp-doc-tlc.romanian='sppc "sop://218.106.52.252:3912/122785"'
-alias spp-movie-axn.english,romanian='sppc "sop://broker.sopcast.com:3912/60709"'
-alias spp-movie-axncrime.english,romanian='sppc "sop://broker.sopcast.com:3912/60711"'
-alias spp-movie-axnscifi.english,romanian='sppc "sop://broker.sopcast.com:3912/60710"'
-alias spp-movie-cinemax,english='sppc "sop://218.106.52.252:3912/122715"'
-alias spp-movie-hbo.english,romanian='sppc "sop://218.106.52.252:3912/122712"'
-alias spp-movie-hbohd.romanian='sppc "sop://broker.sopcast.com:3912/80624"'
-alias spp-movie-kinonova.romanian='sppc "sop://218.106.52.252:3912/123612"'
-alias spp-movie-mgm.english='sppc "sop://218.106.52.252:3912/122779"'
-alias spp-movie-tv1000.english,romanian='sppc "sop://broker.sopcast.com:3912/60703"'
-alias spp-movie-tv1000ch2.english,romanian='sppc "sop://218.106.52.252:3912/123609"'
-alias spp-news-antena3.romania='sppc "sop://broker.sopcast.com:3912/74842"'
-alias spp-news-b1.romania='sppc "sop://broker.sopcast.com:3912/74841"'
-alias spp-show-btv.romanian='sppc "sop://218.106.52.252:3912/123605"'
-alias spp-show-btvaction.romanian='sppc "sop://218.106.52.252:3912/123607"'
-alias spp-show-btvcinema.romanian='sppc "sop://218.106.52.252:3912/123608"'
-alias spp-show-btvcomedy.romanian='sppc "sop://218.106.52.252:3912/123606"'
-alias spp-news-cctv5.chinese='sppc "sop://broker.sopcast.com:3912/6002"'
-alias spp-news-nhk.japanese='sppc "sop://211.152.36.38:3912/6018"'
-alias spp-news-now.chinese='sppc "sop://211.152.36.38:3912/6033"'
-alias spp-news-otv.romania='sppc "sop://broker.sopcast.com:3912/60708"'
-alias spp-show-acasa.spanish,romania='sppc "sop://broker.sopcast.com:3912/80555"'
-alias spp-show-antena1.romania='sppc "sop://broker.sopcast.com:3912/72565"'
-alias spp-show-diema.romanian='sppc "sop://218.106.52.252:3912/123611"'
-alias spp-show-disney.romania='sppc "sop://broker.sopcast.com:3912/60705"'
-alias spp-show-hbocomedy.english='sppc "sop://218.106.52.252:3912/122346"'
-alias spp-show-mtv.english='sppc "sop://218.106.52.252:3912/122713"'
-alias spp-show-procinema.romania='sppc "sop://broker.sopcast.com:3912/80622"'
-alias spp-show-protv.english,romania='sppc "sop://broker.sopcast.com:3912/80621"'
-alias spp-show-taraftv.romania='sppc "sop://broker.sopcast.com:3912/74846"'
-alias spp-show-tv7.romanian='sppc "sop://218.106.52.252:3912/123614"'
-alias spp-show-tvr1.spanish='sppc "sop://broker.sopcast.com:3912/60706"'
-alias spp-show-tvr1ch2.spanish='sppc "sop://broker.sopcast.com:3912/80620"'
-alias spp-sports-digisport.romania='sppc "sop://broker.sopcast.com:3912/98660"'
-alias spp-sports-eurosport1.english='sppc "sop://60.12.164.67:3912/60713"'
-alias spp-sports-eurosport2.romania='sppc "sop://broker.sopcast.com:3912/80398"'
-alias spp-sports-eurosport2ch2.romanian='sppc "sop://218.106.52.252:3912/122778"'
-alias spp-sports-mma.english='sppc "sop://broker.sopcast.com:3912/24267"' #ufc - online on fight day
-alias spp-sports-novasport.romanian='sppc "sop://218.106.52.252:3912/123610"'
-alias spp-sports-ringbg.romanian='sppc "sop://218.106.52.252:3912/122780"'
-alias spp-sports-sportro.romania='sppc "sop://broker.sopcast.com:3912/80562"'
+##################################################
+# .. DIRECTORY SHORTCUTS AND BOOKMARKS	         #
+##################################################
+#                                                #
+alias home='cd ~/'
+alias back='cd $OLDPWD'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias ......='cd ../../../../..'
 
-# Live media streams {{{
+alias backups='cd ~/Backups'
+alias bin='cd ~/bin'
+alias copy='cd ~/Copy'
+alias desktop='~/Desktop'
+
+alias documents='cd ~/Documents'
+alias books='cd ~/Documents/eBooks'
+alias pdf='cd ~/Documents/Pdfs'
+alias wordlists='cd ~/Documents/wordlists'
+
+alias downloads='cd ~/Downloads'
+alias torrinc='cd ~Downloads/Torr Inc'
+
+alias dropbox='cd ~/Dropbox'          
+
+alias games='cd ~/Games'
+alias xonotic='cd ~Games/xonotic-0.7.0/Xonotic/xonotic-linux64-sdl' # Hopefully!!
+alias ryzom='cd ~/Games/ryzom_client/ryzom/ ' # Not installed yet
+
+alias github='cd ~/Github'
+
+alias music='cd ~/Music'
+
+alias pictures='cd ~/Pictures'
+
+alias programs='cd ~/programs'
+alias public='cd ~/Public' 
+
+alias scripts='cd ~/Scripts'
+
+alias tmp='cd ~/TMP'
+alias videos='cd ~/Videos'
+
+alias wips='cd ~/Wips'
+alias webdesign='cd ~/Wips/WebDesign'
+
+alias xfer='cd ~/.weechat/xfer'
+alias zipped='cd ~/Zipped Files'
+
+#########################################
+# .. MY PASSPORT AND USB NAVIGATION     #
+#########################################
+#                                       #
+TODO
+
+##################################################
+#                USEFUL ALIAS                    #
+##################################################
+#                                                #
+alias rm='rm -i -v' # 'rm -i' prompts for every file
+alias cp='cp -i -v'
+alias mv='mv -i -v'
+
+alias ss='scrot -c -d 5' #takes Screenshot after 5 seconds
+
+alias tc='tar cfvz' # Makes a tar file
+alias tx='tar xfvz' # Makes a tar files
+
+#########################################
+# .. LOGS & ERROR LOGS                  #
+#########################################
+#                                       #
+
+
+
+#########################################
+# .. APPLICATIONS WM & CONFIG FILES  #
+#########################################
+#                                       #
+alias wmfsrcv='vim ~/.config/wmfs/wmfsrc'                             #Opens with Vim
+alias wmfskeysv='vim ~/.config/wmfs/keys'                             #Opens with Vim
+alias caritasstatusv='vim ~/.config/wmfs_scripts/caritasstatus.sh'    #Opens with Vim
+
+alias wmfsrcs='suble3 ~/.config/wmfs/wmfsrc'                          #Opens with sublime-text3
+alias wmfskeyss='suble3 ~/.config/wmfs/keys'                          #Opens with sublime-text3
+alias caritasstatuss='suble3 ~/.config/wmfs_scripts/caritasstatus.sh' #Opens with sublime-text3
+
+#########################################
+# .. DOT FILES                          #
+#########################################
+#                                       #
+
+alias eb='vim ~/.bashrc; source ~/.bashrc && echo "Your .bashrc have been sourced"'
+alias ea='vim ~/.bash_aliases.txt; source ~/.bash_aliases.txt && echo "Your .bash_aliases.txt have been sourced"'
+alias ef='vim ~/.bash_functions.txt; source ~/.bash_functions.txt && echo "Your .bash_functions.txt have been sourced"'
+
+alias conkyrcv='vim ~/.conkyrc'                #Opens with Vim
+alias xdefaultsv='vim ~/.Xdefaults'            #Opens with Vim
+alias Xresourcesv='vim ~/.Xresources'          #Opens with Vim
+alias zshv='vim ~/.zsh'                        #Opens with Vim
+
+alias conkyrcs='subl3 ~/.conkyrc'              #Opens with sublime-text3
+alias xdefaultss='subl3 ~/.Xdefaults'          #Opens with sublime-text3
+alias Xresourcess='subl3 ~/.Xresources'        #Opens with sublime-text3
+alias zshs='subl3 ~/.zsh'                      #Opens with sublime-text3
+
+#########################################
+# .. RSS FEED AND CONFIG & LOGS         #
+#########################################
+#                                       #
+alias rss='canto-curses'
+alias cantoconfv='vim ~/.canto-ng/conf'        #Opens with Vim
+alias cantofeedv='vim ~/.canto-ng/feeds'       #Opens with Vim
+alias cantolog='vim ~/.canto-ng/curses-log'    #Opens with Vim
+alias cantodlog='vim ~/.canto-ng/daemon-log'   #Opens with Vim
+
+alias cantoconfs='subl3 ~/.canto-ng/conf'      #Opens with sublime-text3
+alias cantofeeds='subl3 ~/.canto-ng/feeds'     #Opens with sublime-text3
+alias cantologs='subl3 ~/.canto-ng/curses-log' #Opens with sublime-text3
+alias cantodlog='subl3 ~/.canto-ng/daemon-log' #Opens with sublime-text3
+
+#########################################
+# .. MOC PLAYER                         #
+#########################################
+#                                       #
+alias mocconfigv='vim ~/.moc/config'           #Opens with Vim
+alias mockeymapv='vim ~/.moc/keymap'           #Opens with Vim
+
+alias mocconfigs='subl3 ~/.moc/config'         #Opens with sublime-text3
+alias mockeymaps='subl3 ~/.mockeymap'          #Opens with sublime-text3
+
+########################################
+# .. TRANSMISSION AND TORRENTS         #
+########################################
+#                                      #
+alias torrents='cd ~/Downloads/.torrents'
+alias torrents_='cd ~/.config/transmission-daemon/torrents'
+alias settingsv='vim ~/.config/transmission-daemon/settings.json' #Opens with vim
+alias posttorrent.logv='vim ~/.config/transmission-daemon/posttorrent.log' #Opens with vim
+
+alias tstart='sudo systemctl start transmission'
+alias tstop='sudo systemctl stop transmission'
+alias treload='sudo systemctl reload transmission'
+
+
+########################################
+# .. WEECHAT                           #
+########################################
+#                                      #
+alias irc='weechat-curses'
+alias wcaliasv='vim ~/.weechat/alias.conf'         #Opens with Vim
+alias wcbuffersv='vim ~/.weechat/buffers.conf'     #Opens with Vim
+alias ircconfv='vim ~/.weechat/irc.conf'           #Opens with Vim
+alias wcconfv='vim ~./weechat/weechat.conf'        #Opens with Vim
+
+alias wcaliass='suble3 ~/.weechat/alias.conf'      #Opens with sublime-text3
+alias wcbufferss='suble3 ~/.weechat/buffers.conf'  #Opens with sublime-text3
+alias ircconfs='suble3 ~/.weechat/irc.conf'        #Opens with sublime-text3
+alias wcconfs='suble3 ~./weechat/weechat.conf'     #Opens with sublime-text3
+
+##################################################
+# ECRYPTION AND THE LIKE                         #
+##################################################
+#                                                #
+##alias overwriter_='sudo dd if=/dev/zero bs=1M | openssl bf-cbc -pass pass:`cat /dev/urandom | tr -dc [:graph:] | head -c56` | sudo dd of=$dev bs=1M'
+
+##################################################
+# .. SHELLS AND VNC                              #
+##################################################
+#                                                #
+alias start-vnc='vncserver :$USER_VPRT'
+alias stop-vnc='vncserver -kill :$USER_VPRT'
+alias d_='ssh 192.168.1.4'
+
+##################################################
+# .. WEB AND DOWNLOADING                         #
+##################################################
+#                                                #
+alias web='w3m'      # terminal based web browser
+alias links2g='links2 -g'
+
+alias wget='wget -c'
+
+alias im='centerim'  	  # terminal based instant messaging client
+
+alias img='imgurbash' 	  # uploads image to imgur
+
+alias paste_='pastebinit' # pastes to ix.ox pastebin service
+
+##################################################
+# GIT STUFF	                                     #
+##################################################
+#                                                #
+alias gitouch='find . \( -type d -empty \) -and \( -not -regex ./\.git.* \) -exec touch {}/.gitignore \;'
+alias gitup='git pull'
+alias gitci='git commit -a -m'
+alias gitco='git clone'
+alias gita='git add'
+alias gitb='git branch'
+alias gitc='git checkout'
+
+#-------------------------------------------////
+
+##################################################
+# ..SHOUTCAST AND ICECAST TYPE STUFF             #
+##################################################
+#                                                #
+alias shsh='~/bin/shellshout'
+
+##################################################
+# .. LIVE MEDIA STREAMS                          #
+##################################################
+#                                                #
+## ---------------------------------TV streams-------------------------------- ##
+## Aljazeera
+alias ajz='rtmpdump -q -v -r "rtmp://aljazeeraflashlivefs.fplive.net/aljazeeraflashlive-live/aljazeera_eng_med" | vlc --input-title-format "Aljazeera" - &'
+## CNN
+alias cnn='rtmpdump -q -v -r "rtmp://a.cdn.msnbclive.eu/edge/cnn_live" -W "http://msnbclive.eu/player.swf" -p "http://blog.livenewschat.tv/situation-chatroom" | vlc -q --input-title-format "CNN Live" - &'
+## CNN International
+alias cnni='rtmpdump -q -v -r "rtmp://a.cdn.msnbclive.eu/edge/cnni_live" -W "http://msnbclive.eu/getswf.php?name=player.swf" -p "http://blog.livenewschat.tv/international-room-chat" | vlc -q --input-title-format "CNN International" - &'
+## CSPAN
+alias cspan='rtmpdump -q -v -r "rtmp://cp82346.live.edgefcs.net:1935/live" -y CSPAN1@14845 -W "http://www.c-span.org/cspanVideoHD.swf" -p "http://www.c-span.org/Live-Video/C-SPAN/" | vlc -q --input-title-format "CSPAN" - &'
+## CSPAN2
+alias cspan2='rtmpdump -q -v -r "rtmp://cp82347.live.edgefcs.net:1935/live" -y CSPAN2@14846 -W "http://www.c-span.org/cspanVideoHD.swf" -p "http://www.c-span.org/Live-Video/C-SPAN2/" | vlc -q --input-title-format "CSPAN2" - &'
+## CSPAN3
+alias cspan3='rtmpdump -q -v -r "rtmp://cp82348.live.edgefcs.net:1935/live" -y CSPAN3@14847 -W "http://www.c-span.org/cspanVideoHD.swf" -p "http://www.c-span.org/Live-Video/C-SPAN3/" | vlc -q --input-title-format "CSPAN3" - &'
+## MSNBSHIT
+alias msnbc='rtmpdump -q -v -r "rtmp://a.cdn.msnbclive.eu/edge" -y msnbc_live -W "http://msnbclive.eu/getswf.php?name=player.swf" -p "http://www.rentadrone.tv/msnbc-live-rockinroosters/" | vlc -q --input-title-format "MSNBC" - &'
+## RT
+alias rt='rtmpdump -q -v -r "rtmp://rt.fms-04.visionip.tv/live/rt-global-live-HD" -a live -W "http://rt.com/s/swf/player5.4.viral.swf" | vlc -q --input-title-format "Russia Today" - &'
+## Headline News Network
+alias hln='rtmpdump -q -v -r "rtmp://a.cdn.msnbclive.eu/edge" -y "hln_live" -W "http://msnbclive.eu/getswf.php?name=player.swf" -p "http://www.rentadrone.tv/msnbc-live-rockinroosters/" | vlc -q --input-title-format "HLN" - &'
+## Youtube Viewer
+alias ytv='youtube-viewer --prefer-https --prefer-webm --use-colors --quiet --7 -S -C -q --mplayer="/usr/bin/vlc" --mplayer-args="-q"'
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 RTMP_CACHE=1024
 MMS_CACHE=$RTMP_CACHE
 
 # Video
 alias abc24au="mplayer -framedrop -cache $RTMP_CACHE rtmp://cp103653.live.edgefcs.net/live/international_medium@36382"
-#alias alj="mplayer -framedrop -cache $RTMP_CACHE rtmp://aljazeeraflashlivefs.fplive.net/aljazeeraflashlive-live/aljazeera_eng_med"
-alias alj="rtmpdump -v -r rtmp://livestfslivefs.fplive.net/livestfslive-live/ -y 'aljazeera_en_veryhigh?videoId=747084146001&lineUpId=&pubId=665003303001&playerId=751182905001&affiliateId=' -W 'http://admin.brightcove.com/viewer/us20121025.1123/federatedVideoUI/BrightcovePlayer.swf?uid=1351574870983 -p 'http://english.aljazeera.net/watch_now/ -a 'aljazeeraflashlive-live?videoId=747084146001&lineUpId=&pubId=665003303001&playerId=751182905001&affiliateId=' | mplayer -"
+alias alj="mplayer -framedrop -cache $RTMP_CACHE rtmp://aljazeeraflashlivefs.fplive.net/aljazeeraflashlive-live/aljazeera_eng_med"
+#alias alj2="rtmpdump -v -r rtmp://livestfslivefs.fplive.net/livestfslive-live/ -y 'aljazeera_en_veryhigh?videoId=747084146001&lineUpId=&pubId=665003303001&playerId=751182905001&affiliateId=' -W 'http://admin.brightcove.com/viewer/us20121025.1123/federatedVideoUI/BrightcovePlayer.swf?uid=1351574870983 -p 'http://english.aljazeera.net/watch_now/ -a 'aljazeeraflashlive-live?videoId=747084146001&lineUpId=&pubId=665003303001&playerId=751182905001&affiliateId=' | mplayer -"
 alias cspan1="mplayer -framedrop -cache $RTMP_CACHE rtmp://cp82346.live.edgefcs.net:1935/live/CSPAN1@14845"
 alias cspan2="mplayer -framedrop -cache $RTMP_CACHE rtmp://cp82347.live.edgefcs.net:1935/live/CSPAN2@14846"
 alias cspan3="mplayer -framedrop -cache $RTMP_CACHE rtmp://cp82348.live.edgefcs.net:1935/live/CSPAN3@14847"
@@ -88,13 +299,101 @@ alias france24="rtmpdump -v -r rtmp://stream2.france24.yacast.net/france24_live/
 alias rt="rtmpdump -v -r rtmp://fms5.visionip.tv/live -a live -W http://rt.com/s/swf/player5.4.viral.swf -p http://rt.com/on-air/ -y RT_3 | mplayer -framedrop -cache $RTMP_CACHE -"
 alias skynews="mplayer -cache $MMS_CACHE mms://live1.wm.skynews.servecast.net/skynews_wmlz_live300k"
 
-# Radio
+##################################################
+# TV/DVD/VIDEO/AUDIO COPYING/RIPPING/EXTRACTING	 alias to functions#
+##################################################
+#                                                #
+
+##################################################
+# .. SCREENCASTING
+##################################################
+#                                                #
+#alias screencast1='ffmpeg -f alsa -ac 2 -i hw:0,0 -f x11grab -r 30 -s 1280x800+0+0 -i :0.0 -acodec pcm_s16le -vcodec libx264 -vpre lossless_ultrafast -threads 0 -y output.mkv'
+alias screencast2='ffmpeg -f x11grab -r 30 -s 1280x800 -i :0.0 $HOME/outputFile.mpg'	# record a screencast and convert it to an mpeg
+#alias screencast3="ffmpeg -y -f alsa -ac 2 -i pulse -f x11grab -r 30 -s `xdpyinfo | grep 'dimensions:'|awk '{print $2}'` -i :0.0 -acodec pcm_s16le output.wav -an -vcodec libx264 -vpre lossless_ultrafast -threads 0 output.mp4" # capture video of a linux desktop
+# alias
+
+##################################################
+# .. MPLAYER ALIASES                             #
+##################################################
+#                                                #
+#alias
+alias hiresvideo='mplayer -framedrop -vfm ffmpeg -lavdopts lowres=1:fast:skiploopfilter=all' # play high-res video files on a slow processor
+
+alias play='mplayer -zoom -x 1024 -y 768 -fs -framedrop '
+
+##################################################
+# .. CONVERT VIDEO                               #
+##################################################
+#                                                #
+alias 3d="ffmpeg -i in.mp4 -vf stereo3d=sbs2l:arcd -s 1280x720 -acodec copy -threads 10 -b:v 10000k -preset fast -crf 19 -vcodec libx264 3dout.mkv"
+
+##################################################
+# .. CONVERT AUDIO                               #
+##################################################
+#
+alias wma2mp3='for f in *.wma; do ffmpeg -i "$f" -ab 128k "${f%.wma}.mp3" -ab 128K; done'		# convert wma to mp3@128k
+alias wma2ogg='for f in *.wma; do ffmpeg -i "$f" -ab 128k "${f%.wma}.ogg" -ab 128K; done'		# convert wma to ogg@128
+alias wma2wav='for i in *.wma; do mplayer -vo null -vc dummy -af resample=44100 -ao pcm:waveheader:file="${i%.wma}.wav" "$i" ; done'	# convert wma to wav
+# extract sound from flv & make mp3 #/ maybe part of function flac2ogg
+alias flvaudio='ffmpeg -i "$1" -f mp3 -vn -acodec copy output.mp3'
+
+##################################################
+# .. AUDIO                                       #
+##################################################
+#                                                #
+alias mic_record='arecord -q -f cd -r 44100 -c2 -t raw | lame -S -x -h -b 128 - `date +%Y%m%d%H%M`.mp3'	# record microphone input and output to date stamped mp3 file
+
+##################################################
+# .. MOCP                                        #
+##################################################
+#                                                #
+alias g_='mocp -G'        # Toggle play and pause
+
+##################################################
+# .. RIPS AND COPIES VIDEO                       #
+##################################################
+#
+alias atvrip='atv2avi'     # To Watch Analog TV (might need a TV/Tunner)
+alias atvrip_w='atv2avi_w' # To Watch Analog TV (might need a TV/Tunner)
+
+alias dtvrip='dtv2avi'     # To Watch Digital TV (might need a TV/Tunner)
+alias dtvrip_w='dtv2avi_w' # To Watch Digital TV (might need a TV/Tunner)
+
+alias dvdcopy='dvd2iso'    # Aliased to function dvd_to_iso
+alias dvd2mpeg='dvd2mpg'   # Aliased to functuin dvd_to_mpg
+
+alias dvd2vob='dvd2mpg'    # Aliased to function dvd_to_vob
+
+alias dvdrip='video2avi'   # Aliased to function video_2_avi 1 of 2
+#alias rip='video2avi'     # Aliased to funtcion vide_2_avi 2 of 2
+
+#################################################
+# .. RADIO                                      #
+#################################################
+# 
+alias spotify_next='$HOME/spotifycmd/spotify_cmd.exe next; $HOME/spotifycmd/spotify_cmd.exe status'
+alias spotify_playpause='$HOME/spotifycmd/spotify_cmd.exe playpause'
+alias spotify_prev='$HOME/spotifycmd/spotify_cmd.exe prev; $HOME/spotifycmd/spotify_cmd.exe status'
+alias spotify_status='$HOME/spotifycmd/spotify_cmd.exe status'
+alias spotify_stop='$HOME/spotifycmd/spotify_cmd.exe stop'
+
 alias echofm='mplayer http://xgrid04.ruf.uni-freiburg.de:8000/'
 alias radioq='mplayer http://stream.radioq.de:8000/gross.mp3'
 alias startfm='mplayer http://eteris.startfm.lt/startfm'
 alias wuvt='mplayer http://engine.collegemedia.vt.edu:8000/wuvt-hq.ogg'
 alias wvtf='mplayer http://mp3.rev.net:8000/wvtf-64.mp3'
 alias wwvt='mplayer http://mp3.rev.net:8000/riq-64.mp3'
+
 # }}}
 
+
+#youtube subscriptions alias here
+#
+#
+#
+# # alias mtube_='mplayer -fs $(echo "http://youtube.com/get_video.php?$(curl -s "$1" | sed -n "/watch_fullscreen/s;.*\(video_id.\+\)&title.*;\1;p")")'
+
+alias ytd='youtube-dl -cit '
+alias ym3='ytmp3 '
 
