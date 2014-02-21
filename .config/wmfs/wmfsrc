@@ -1,0 +1,248 @@
+#
+# WMFS2 configuration file
+#
+
+# Possible file inclusion:
+# @include "file"
+  @include "keys"
+  
+# Multi theme section
+[themes]
+
+  [theme]
+     # No name mean default
+     # name = "default"
+
+     font = "fixed"
+
+     # Bars
+     bars_width = 14
+     bars_fg = "#CCCCCC"
+     bars_bg = "#111111"
+
+     # Element tags
+     tags_normal_fg = "#7D7D7D"
+     tags_normal_bg = "#222222"
+     # tags_normal_statusline = ""
+
+     tags_sel_fg    = "#222222"
+     tags_sel_bg    = "#BDE077"
+     # tags_sel_statusline = ""
+
+     tags_occupied_fg = "#CCCCCC"
+     tags_occupied_bg = "#444444"
+     tags_occupied_statusline = "\R[0;0;100;1;#AABBAA]"
+
+     tags_urgent_fg    = "#7D7D7D"
+     tags_urgent_bg    = "#FDA53C"
+     # tags_urgent_statusline = ""
+
+     tags_border_color = "#050505"
+     tags_border_width = 1
+
+     # Frame / Client
+     client_normal_fg = "#3C3C3C"
+     client_normal_bg = "#1C1C1C"
+     client_normal_statusline = "\s[3;9;#121212;x] \s[2;8;#ff0000;x](1;client_close)"
+
+     client_sel_fg = "#BBBBBB"
+     client_sel_bg = "#242424"
+     client_sel_statusline = "\s[3;9;#121212;x] \s[2;8;#ff0000;x](1;client_close)"
+
+     # client_free_statusline = ""
+
+     frame_bg = "#FFFFFF"
+     client_titlebar_width = 12
+     client_border_width = 1
+
+  [/theme]
+
+  [theme]
+     name = "blue"
+     #font = "-*-termsyn.icons-medium-*-*-*-11-*-*-*-*-*-*-*"
+     
+     # Bars
+     bars_width = 17
+     bars_fg = "#505050"
+     bars_bg = "#050505"
+     
+     # Element tags
+     tags_normal_fg = "#505050"
+     tags_normal_bg = "#050505"
+     #tags_normal_statusline = ""
+     
+     tags_sel_fg = "#63b8ff"
+     #tags_sel_bg = "#050505"
+     tags_sel_bg = "#C5F779"
+     #tags_sel_statusline = ""
+     
+     tags_occupied_fg = "#bd8a8c"
+     #tags_occupied_bg = "#050505"
+     tags_occupied_bg = "#285A8B"
+     #tags_occupied_statusline = "\R[0;11;20;1;#63b8ff]"
+     
+     tags_urgent_fg = "#bdbd8a"
+     #tags_urgent_bg = "#050505"
+     tags_urgent_bg = "#ffffaf"
+
+     #tags_urgent_statusline = "\R[0;11;20;1;#CC0000]\R[0;1;20;1;#CC0000]"
+     
+     tags_border_color = "#050505"
+     tags_border_width = 0
+     
+     # Frame / Client
+     client_normal_fg = "#202020"
+     client_normal_bg = "#050505"
+     #client_normal_statusline = "\s[3;9;#7D7D7D;#](1;client_close)"
+     
+     client_sel_fg = "#c0c0c0"
+     client_sel_bg = "#101010"
+     #client_sel_statusline = "\s[3;9;#222222;#](1;client_close)"
+     
+     frame_bg = "#63b8ff"
+     client_titlebar_width = 11
+     client_border_width = 1
+  [/theme]
+
+[/themes]
+
+[bars]
+
+  # Position:
+  #
+  # 0  Top
+  # 1  Bottom
+  # 2  Hide
+
+  # Element type:
+  #
+  # t  Tags
+  # s  Statustext (will take available space)
+  # y  Systray (can be set only ONE time among all element)
+  # l  Launcher (will be expended at launcher use)
+
+  [bar]
+     name = "marsbar"
+     position = 0
+     screen = 0
+     elements = "tlsy"   # element order in bar
+     theme = "blue"
+  [/bar]
+
+#  [bar]
+#     name = "pub"    # this is the bottom bar
+#     position = 1
+#     screen = 0
+#     elements = "ls" # element order in bar
+#     theme = "blue"
+#  [/bar]
+
+# [bar]
+#    position = 0
+#    screen = 1
+#    elements = "ts"
+#    theme = "default"
+# [/bar]
+
+[/bars]
+
+[tags]
+
+  # Tag wrapping navigation
+  circular = true
+
+  # Use no screen option or screen = -1 to set tag on each screen
+  [tag]
+      #screen = -1
+      screen = 0
+      name = "1 Main"
+      #name = "   " statusline = "\i[5;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/d12.png]\  "
+      # statusline=""
+  [/tag]
+
+  [tag] screen = 0 name = "   " statusline = "^i[7;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/network(1).png]" [/tag]
+  [tag] screen = 0 name = "   " statusline = "^i[7;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/Chat.png]" [/tag]
+  [tag] screen = 0 name = "   " statusline = "^i[7;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/coding_1.png]" [/tag]
+  [tag] screen = 0 name = "   " statusline = "^i[7;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/arrow_down_double.png]" [/tag]
+  [tag] screen = 0 name = "   " statusline = "^i[7;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/feeds_lilac.png]" [/tag]
+  [tag] screen = 0 name = "   " statusline = "^i[7;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/mail(3).png]" [/tag]
+  [tag] screen = 0 name = "   " statusline = "^i[7;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/network_drive3.png]" [/tag]
+  [tag] screen = 0 name = "   " statusline = "^i[7;-1;15;15;/home/zoose/.config/wmfs/wmfs_img/working_folder.png]" [/tag]
+
+# ORIGINAL TAG NAMES COMMENTED OUT
+#  [tag] name = "ssh" [/tag]
+#  [tag] name = "irc" [/tag]
+#  [tag] name = "zsh" [/tag]
+#  [tag] name = "subl3" [/tag]
+#  [tag] name = "SpFm" [/tag]
+#  [tag] name = "Rss" [/tag]
+
+  # Mousebinds associated to Tags element button
+  [mouse] button = "1" func = "tag_click" [/mouse]
+  [mouse] button = "4" func = "tag_next"  [/mouse]
+  [mouse] button = "5" func = "tag_prev"  [/mouse]
+
+
+[/tags]
+
+[client]
+
+  # Padding between clients (default: 0) :
+  #padding = 75
+
+  # Give focus to new created client (default = false)
+  autofocus = true
+
+  theme = "default"
+  key_modifier = "Super"
+
+  # Focus type:
+  #  enter : focus follow mouse (default)
+  #  click : click to focus
+  #  everything-else : disable mouse focus support
+  focus = enter
+
+  [mouse] button = "1" func = "client_focus_click"    [/mouse]
+  [mouse] button = "1" func = "mouse_swap"            [/mouse]
+  [mouse] button = "2" func = "mouse_tab"             [/mouse]
+  [mouse] button = "3" func = "mouse_resize"          [/mouse]
+  [mouse] button = "4" func = "client_focus_next_tab" [/mouse]
+  [mouse] button = "5" func = "client_focus_prev_tab" [/mouse]
+
+[/client]
+
+[rules]
+
+  [rule]
+      # use instance = "*" for a all-clients rule
+      instance = "chromium"
+
+      # role   = ""
+      # name   = ""
+      # theme  = "default"
+
+      tag    = 1  # 2nd tag
+      screen = 0
+
+      free       = false
+      tab        = false
+      ignore_tag = false
+  [/rule]
+
+[/rules]
+
+[launchers]
+
+  # command can be an uicb function or an uicb function + extension (see example)
+  [launcher]
+     name = "exec"
+     prompt = "Run:"
+
+     # Example of uicb + ext:
+     #   command = "spawn xterm -e"
+     command = "spawn"
+
+     width = 150
+  [/launcher]
+
+[/launchers]

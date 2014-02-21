@@ -25,15 +25,15 @@ if [ -d ~/bin ]; then
 fi
 
 ##################################################
-# Stop Flash from tracking everything you do.  #
+# Stop Flash from tracking everything you do.    #
 ##################################################
-###### Brute force way to block all LSO cookies on Linux system with non-free Flash browser plugin
+## Brute force way to block all LSO cookies on Linux system with non-free Flash browser plugin
 #for A in ~/.adobe ~/.macromedia ; do ( [ -d $A ] && rm -rf $A ; ln -s -f /dev/null $A ) ; done
 
 xhost +local:root > /dev/null 2>&1
 
-complete -cf sudo
-complete -cf man
+complete -cf sudo #autocomplete after 'sudo'
+complete -cf man  #autocomplere after 'man' for man pages
 
 shopt -s cdspell
 shopt -s checkwinsize
@@ -58,19 +58,6 @@ export LESS_TERMCAP_so=$'\E[01;44;33m' # begin standout-mode - info box
 export LESS_TERMCAP_ue=$'\E[0m'        # end underline
 export LESS_TERMCAP_us=$'\E[01;32m'    # begin underline          export MANPAGER="/usr/bin/most -s" # color using most
 
-#
-#alias eb='vim ~/.bashrc; source ~/.bashrc && echo "Your .bashrc have been sourced"'
-#alias ea='vim ~/.bash_aliases.txt; source ~/.bash_aliases.txt && echo "Your .bash_aliases.txt have been sourced"'
-#alias ef='vim ~/.bash_functions.txt; source ~/.bash_functions.txt && echo "Your .bash_functions.txt have been sourced"'
-
-#alias rm='rm -i -v' # 'rm -i' prompts for every file
-#alias cp='cp -i -v'
-#alias mv='mv -i -v'
-
-#alias ytd='youtube-dl -cit '
-#alias ym3='ytmp3 '
-
-#
 alias ls='ls --group-directories-first --time-style=+"%d.%m.%Y %H:%M" --color=auto -F'
 alias ll='ls -l --group-directories-first --time-style=+"%d.%m.%Y %H:%M" --color=auto -F'
 alias la='ls -la --group-directories-first --time-style=+"%d.%m.%Y %H:%M" --color=auto -F'
@@ -102,8 +89,6 @@ ex ()
     echo "'$1' is not a valid file"
   fi
 } 
-
-#ytmp3() { youtube-dl -c --restrict-filenames --extract-audio --audio-format mp3 -o "%(title)s.%(ext)s" $@ ;}
 
 # PROMPT
 PS1='[\u@\h \W]\$ ' 
